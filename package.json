@@ -2,7 +2,7 @@
   "name": "bpmn-engine",
   "description": "BPMN 2.0 execution engine. Open source javascript workflow engine.",
   "version": "14.0.0",
-  "main": "index.js",
+  "main": "index.mjs",
   "types": "types/bpmn-engine.d.ts",
   "repository": {
     "type": "git",
@@ -26,8 +26,8 @@
     "wintest": "node_modules/.bin/mocha",
     "cov:html": "nyc mocha -R dot && nyc report --reporter=html",
     "test:lcov": "nyc mocha -R dot && nyc report --reporter lcov && npm run posttest",
-    "toc": "node scripts/generate-api-toc ./docs/API.md,./docs/Examples.md",
-    "test-md": "node scripts/test-markdown.js ./docs/API.md && node scripts/test-markdown.js ./docs/Examples.md"
+    "toc": "node scripts/generate-api-toc.mjs ./docs/API.md,./docs/Examples.md",
+    "test-md": "node scripts/test-markdown.mjs ./docs/API.md && node scripts/test-markdown.mjs ./docs/Examples.md"
   },
   "keywords": [
     "workflow",

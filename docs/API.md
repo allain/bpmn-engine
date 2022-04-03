@@ -39,6 +39,7 @@ The engine. Executes passed BPMN 2.0 definitions.
 Creates a new Engine.
 
 Arguments:
+
 - `options`: Optional options, passed to [environment](https://github.com/paed01/bpmn-elements/blob/master/docs/Environment.md):
   - `disableDummyScript`: optional boolean to disable dummy script supplied to empty ScriptTask
   - `elements`: optional object with element type mapping override
@@ -55,6 +56,7 @@ Arguments:
   - `typeResolver`: optional type resolver function passed to moddle-context-serializer
 
 Returns:
+
 - `name`: engine name
 - `broker`: engine [broker](https://github.com/paed01/smqp)
 - `state`: engine state
@@ -72,7 +74,7 @@ Returns:
 - `waitFor()`: wait for engine events, returns Promise
 
 ```javascript
-const {Engine} = require('bpmn-engine');
+const { Engine } = require('bpmn-engine');
 const fs = require('fs');
 
 const engine = new Engine({
@@ -89,6 +91,7 @@ const engine = new Engine({
 Execute definition.
 
 Arguments:
+
 - `options`: Optional object with options to override the initial engine options
   - [`listener`](#execution-listener): Listen for [activity events](#activity-events), an `EventEmitter` object
   - [`variables`](#execution-variables): Optional object with instance variables
@@ -103,8 +106,8 @@ Execute options overrides the initial options passed to the engine before execut
 Returns [Execution API](#execution-api)
 
 ```javascript
-const {Engine} = require('bpmn-engine');
-const {EventEmitter} = require('events');
+const { Engine } = require('bpmn-engine');
+const { EventEmitter } = require('events');
 
 const source = `
 <?xml version="1.0" encoding="UTF-8"?>
@@ -130,35 +133,46 @@ const engine = new Engine({
   source,
   variables: {
     data: {
-      inputFromUser: 0,
+      inputFromUser: 0
     }
   }
 });
 
 const listener = new EventEmitter();
 listener.on('wait', (elementApi) => {
-  elementApi.owner.logger.debug(`<${elementApi.executionId} (${elementApi.id})> signal with io`, elementApi.content.ioSpecification);
+  elementApi.owner.logger.debug(
+    `<${elementApi.executionId} (${elementApi.id})> signal with io`,
+    elementApi.content.ioSpecification
+  );
   elementApi.signal({
     ioSpecification: {
-      dataOutputs: [{
-        id: 'userInput',
-        value: 2
-      }]
+      dataOutputs: [
+        {
+          id: 'userInput',
+          value: 2
+        }
+      ]
     }
   });
 });
 
-engine.execute({
-  listener,
-  variables: {
-    data: {
-      inputFromUser: 1,
+engine.execute(
+  {
+    listener,
+    variables: {
+      data: {
+        inputFromUser: 1
+      }
     }
+  },
+  (err, execution) => {
+    if (err) throw err;
+    console.log(
+      'completed with overridden listener',
+      execution.environment.output
+    );
   }
-}, (err, execution) => {
-  if (err) throw err;
-  console.log('completed with overridden listener', execution.environment.output);
-});
+);
 ```
 
 #### Execution `listener`
@@ -166,8 +180,8 @@ engine.execute({
 An `EventEmitter` object with listeners. Listen for [activity events](#activity-events).
 
 ```javascript
-const {Engine} = require('bpmn-engine');
-const {EventEmitter} = require('events');
+const { Engine } = require('bpmn-engine');
+const { EventEmitter } = require('events');
 
 const source = `
 <?xml version="1.0" encoding="UTF-8"?>
@@ -184,11 +198,15 @@ const engine = new Engine({
 
 const listener = new EventEmitter();
 listener.on('activity.enter', (elementApi, engineApi) => {
-  console.log(`${elementApi.type} <${elementApi.id}> of ${engineApi.name} is entered`);
+  console.log(
+    `${elementApi.type} <${elementApi.id}> of ${engineApi.name} is entered`
+  );
 });
 
 listener.on('wait', (elemntApi, instance) => {
-  console.log(`${elemntApi.type} <${elemntApi.id}> of ${instance.name} is waiting for input`);
+  console.log(
+    `${elemntApi.type} <${elemntApi.id}> of ${instance.name} is waiting for input`
+  );
   elemntApi.signal('don´t wait for me');
 });
 
@@ -202,7 +220,7 @@ engine.execute({
 Execution variables are passed as the first argument to `#execute`.
 
 ```javascript
-const {Engine} = require('bpmn-engine');
+const { Engine } = require('bpmn-engine');
 const fs = require('fs');
 
 const engine = new Engine({
@@ -214,12 +232,15 @@ const variables = {
   input: 1
 };
 
-engine.execute({
-  variables
-}, (err, engineApi) => {
-  if (err) throw err;
-  console.log('completed');
-});
+engine.execute(
+  {
+    variables
+  },
+  (err, engineApi) => {
+    if (err) throw err;
+    console.log('completed');
+  }
+);
 ```
 
 #### Execution `services`
@@ -227,7 +248,7 @@ engine.execute({
 A service is a function exposed on `environment.services`.
 
 ```javascript
-const {Engine} = require('bpmn-engine');
+const { Engine } = require('bpmn-engine');
 const bent = require('bent');
 
 const source = `
@@ -260,14 +281,17 @@ const engine = new Engine({
   source
 });
 
-engine.execute({
-  services: {
-    get: bent('json')
+engine.execute(
+  {
+    services: {
+      get: bent('json')
+    }
+  },
+  (err, engineApi) => {
+    if (err) throw err;
+    console.log('completed', engineApi.name, engineApi.environment.variables);
   }
-}, (err, engineApi) => {
-  if (err) throw err;
-  console.log('completed', engineApi.name, engineApi.environment.variables);
-});
+);
 ```
 
 ### `async getDefinitionById(id)`
@@ -279,24 +303,28 @@ Get definition by id, returns Promise
 Add definition source by source context.
 
 Arguments:
+
 - `source`: object
   - `sourceContext`: serializable source
 
 ```javascript
 const BpmnModdle = require('bpmn-moddle');
 const elements = require('bpmn-elements');
-const {Engine} = require('bpmn-engine');
-const {EventEmitter} = require('events');
-const {default: serializer, TypeResolver} = require('moddle-context-serializer');
+const { Engine } = require('bpmn-engine');
+const { EventEmitter } = require('events');
+const {
+  default: serializer,
+  TypeResolver
+} = require('moddle-context-serializer');
 
 const engine = new Engine({
-  name: 'add source',
+  name: 'add source'
 });
 
 (async function IIFE(source) {
   const sourceContext = await getContext(source);
   engine.addSource({
-    sourceContext,
+    sourceContext
   });
 
   const listener = new EventEmitter();
@@ -326,7 +354,7 @@ async function getContext(source, options = {}) {
   const moddleContext = await getModdleContext(source, options);
 
   if (moddleContext.warnings) {
-    moddleContext.warnings.forEach(({error, message, element, property}) => {
+    moddleContext.warnings.forEach(({ error, message, element, property }) => {
       if (error) return console.error(message);
       console.error(`<${element.id}> ${property}:`, message);
     });
@@ -334,7 +362,7 @@ async function getContext(source, options = {}) {
 
   const types = TypeResolver({
     ...elements,
-    ...options.elements,
+    ...options.elements
   });
 
   return serializer(moddleContext, types, options.extendFn);
@@ -351,7 +379,7 @@ function getModdleContext(source, options) {
 Get all definitions
 
 ```javascript
-const {Engine} = require('bpmn-engine');
+const { Engine } = require('bpmn-engine');
 
 const source = `
 <?xml version="1.0" encoding="UTF-8"?>
@@ -371,7 +399,10 @@ const engine = new Engine({
 
 engine.getDefinitions().then((definitions) => {
   console.log('Loaded', definitions[0].id);
-  console.log('The definition comes with process', definitions[0].getProcesses()[0].id);
+  console.log(
+    'The definition comes with process',
+    definitions[0].getProcesses()[0].id
+  );
 });
 ```
 
@@ -393,8 +424,8 @@ The saved state will include the following content:
       - `entered`: Boolean indicating if the child is currently executing
 
 ```javascript
-const {Engine} = require('bpmn-engine');
-const {EventEmitter} = require('events');
+const { Engine } = require('bpmn-engine');
+const { EventEmitter } = require('events');
 const fs = require('fs');
 
 const processXml = `
@@ -427,11 +458,14 @@ listener.once('start', () => {
   fs.writeFileSync('./tmp/some-random-id.json', JSON.stringify(state, null, 2));
 });
 
-engine.execute({
-  listener
-}, (err) => {
-  if (err) throw err;
-});
+engine.execute(
+  {
+    listener
+  },
+  (err) => {
+    if (err) throw err;
+  }
+);
 ```
 
 ### `stop()`
@@ -439,8 +473,8 @@ engine.execute({
 Stop execution. The instance is terminated.
 
 ```javascript
-const {Engine} = require('bpmn-engine');
-const {EventEmitter} = require('events');
+const { Engine } = require('bpmn-engine');
+const { EventEmitter } = require('events');
 
 const source = `
 <?xml version="1.0" encoding="UTF-8"?>
@@ -465,14 +499,17 @@ listener.once('wait', () => {
   state = engine.getState();
 });
 
-engine.execute({
-  variables: {
-    executionId: 'some-random-id'
+engine.execute(
+  {
+    variables: {
+      executionId: 'some-random-id'
+    },
+    listener
   },
-  listener
-}, (err) => {
-  if (err) throw err;
-});
+  (err) => {
+    if (err) throw err;
+  }
+);
 ```
 
 ### `recover(state[, recoverOptions])`
@@ -480,11 +517,12 @@ engine.execute({
 Recover engine from state.
 
 Arguments:
+
 - `state`: engine state
 - `recoverOptions`: optional object with options that will override options passed to the engine at init, but not options recovered from state
 
 ```js
-const {Engine} = require('bpmn-engine');
+const { Engine } = require('bpmn-engine');
 
 const state = fetchSomeState();
 const engine = new Engine().recover(state);
@@ -495,23 +533,23 @@ const engine = new Engine().recover(state);
 Resume execution function with previously saved engine state.
 
 Arguments:
+
 - `options`: optional resume options object
   - [`listener`](#execution-listener): execution listener
 - `callback`: optional callback
   - `err`: Error if any
   - `execution`: Resumed engine execution
 
-
 ```js
-const {Engine} = require('bpmn-engine');
-const {EventEmitter} = require('events');
+const { Engine } = require('bpmn-engine');
+const { EventEmitter } = require('events');
 
 const state = fetchSomeState();
 const engine = new Engine().recover(state);
 
 const listener = new EventEmitter();
 
-engine.resume({listener}, () => {
+engine.resume({ listener }, () => {
   console.log('completed');
 });
 ```
@@ -549,6 +587,7 @@ Get execution state.
 Delegate a signal message to all interested parties, usually MessageEventDefinition, SignalEventDefinition, SignalTask (user, manual), ReceiveTask, or a StartEvent that has a form.
 
 Arguments:
+
 - `message`: optional object
   - `id`: optional task/element id to signal, also matched with Message and Signal id. If not passed only anonymous Signal- and MessageEventDefinitions will pick up the signal.
   - `executionId`: optional execution id to signal, specially for looped tasks, also works for signal tasks that are not looped
@@ -557,10 +596,18 @@ Arguments:
   - `ignoreSameDefinition`: boolean, ignore same definition, used when a signal is forwarded from another definition execution, see example
 
 An example on how to setup signal forwarding between definitions:
+
 ```js
-engine.broker.subscribeTmp('event', 'activity.signal', (routingKey, msg) => {
-  engine.execution.signal(msg.content.message, {ignoreSameDefinition: true});
-}, {noAck: true});
+engine.broker.subscribeTmp(
+  'event',
+  'activity.signal',
+  (routingKey, msg) => {
+    engine.execution.signal(msg.content.message, {
+      ignoreSameDefinition: true
+    });
+  },
+  { noAck: true }
+);
 ```
 
 ## `cancelActivity(message)`
@@ -568,6 +615,7 @@ engine.broker.subscribeTmp('event', 'activity.signal', (routingKey, msg) => {
 Delegate a cancel message to all interested parties, perhaps a stalled TimerEventDefinition.
 
 Arguments:
+
 - `message`: optional object
   - `id`: optional activity id to cancel execution
   - `executionId`: optional execution id to signal, useful for an event with multiple event defintions

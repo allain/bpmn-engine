@@ -1,12 +1,18 @@
-'use strict';
+import fs from 'fs';
+import { URL, fileURLToPath } from 'url';
 
-const moddleOptions = require('./js-bpmn-moddle.json');
+const moddleOptions = JSON.parse(
+  fs.readFileSync(
+    fileURLToPath(new URL('./js-bpmn-moddle.json', import.meta.url)),
+    'utf-8'
+  )
+);
 
 const safePattern = /[./\\#*:\s]/g;
 
-module.exports = {
+export default {
   extension: Js,
-  moddleOptions,
+  moddleOptions
 };
 
 function Js(activity, context) {
@@ -15,7 +21,7 @@ function Js(activity, context) {
 
   return {
     type: 'js:extension',
-    extensions: {resultVariable, formKey},
+    extensions: { resultVariable, formKey },
     activate(msg) {
       if (resultVariable) resultVariable.activate(msg);
       if (formKey) formKey.activate(msg);
@@ -23,17 +29,17 @@ function Js(activity, context) {
     deactivate() {
       if (resultVariable) resultVariable.deactivate();
       if (formKey) formKey.deactivate();
-    },
+    }
   };
 }
 
 function ResultVariableIo(activity, context) {
-  const {id, logger, behaviour} = activity;
-  const {result} = behaviour;
+  const { id, logger, behaviour } = activity;
+  const { result } = behaviour;
   if (!result) return;
 
-  const {broker} = activity;
-  const {environment} = context;
+  const { broker } = activity;
+  const { environment } = context;
 
   const type = 'js:resultvariable';
   let activityConsumer;
@@ -41,7 +47,7 @@ function ResultVariableIo(activity, context) {
   return {
     type,
     activate,
-    deactivate,
+    deactivate
   };
 
   function deactivate() {
@@ -50,7 +56,12 @@ function ResultVariableIo(activity, context) {
 
   function activate() {
     if (activityConsumer) return;
-    activityConsumer = broker.subscribeTmp('event', 'activity.end', onActivityEnd, {noAck: true});
+    activityConsumer = broker.subscribeTmp(
+      'event',
+      'activity.end',
+      onActivityEnd,
+      { noAck: true }
+    );
   }
 
   function onActivityEnd(_, message) {
@@ -62,12 +73,12 @@ function ResultVariableIo(activity, context) {
 }
 
 function FormKey(activity, context) {
-  const {id, logger, behaviour} = activity;
-  const {formKey} = behaviour;
+  const { id, logger, behaviour } = activity;
+  const { formKey } = behaviour;
   if (!formKey) return;
 
-  const {broker} = activity;
-  const {environment} = context;
+  const { broker } = activity;
+  const { environment } = context;
 
   const type = 'js:formkey';
   const safeType = brokerSafeId(type).toLowerCase();
@@ -76,7 +87,7 @@ function FormKey(activity, context) {
   return {
     type,
     activate,
-    deactivate,
+    deactivate
   };
 
   function deactivate() {
@@ -85,7 +96,12 @@ function FormKey(activity, context) {
 
   function activate() {
     if (activityConsumer) return;
-    activityConsumer = broker.subscribeTmp('event', 'activity.start', onActivityStart, {noAck: true});
+    activityConsumer = broker.subscribeTmp(
+      'event',
+      'activity.start',
+      onActivityStart,
+      { noAck: true }
+    );
   }
 
   function onActivityStart(_, message) {
@@ -95,8 +111,8 @@ function FormKey(activity, context) {
     broker.publish('format', `run.${safeType}.start`, {
       form: {
         type,
-        key: formKeyValue,
-      },
+        key: formKeyValue
+      }
     });
   }
 }

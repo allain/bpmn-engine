@@ -1,215 +1,213 @@
-"use strict";
-
-import * as factory from "../helpers/factory.mjs";
-import * as testHelpers from "../helpers/testHelpers.mjs";
-import { Engine } from "../../index.mjs";
-import fs from "fs";
+import * as factory from '../helpers/factory.mjs';
+import * as testHelpers from '../helpers/testHelpers.mjs';
+import { Engine } from '../../index.mjs';
+import fs from 'fs';
 
 const camundaJson = JSON.parse(
   fs.readFileSync(
-    "./node_modules/camunda-bpmn-moddle/resources/camunda.json",
-    "utf-8"
+    './node_modules/camunda-bpmn-moddle/resources/camunda.json',
+    'utf-8'
   )
 );
-const signalsSource = factory.resource("signals.bpmn");
-const sendSignalSource = factory.resource("send-signal.bpmn");
+const signalsSource = factory.resource('signals.bpmn');
+const sendSignalSource = factory.resource('send-signal.bpmn');
 
-Feature("Multiple sources", () => {
-  Scenario("Two definitions that communicates with signals", () => {
+Feature('Multiple sources', () => {
+  Scenario('Two definitions that communicates with signals', () => {
     let engine, signalContext, updateContext;
     Given(
-      "a trade process waiting for spot price update signal and another admin processs that updates price",
+      'a trade process waiting for spot price update signal and another admin processs that updates price',
       async () => {
         signalContext = await testHelpers.context(signalsSource, {
-          camunda: camundaJson,
+          camunda: camundaJson
         });
         engine = getExtendedEngine({
-          sourceContext: signalContext,
+          sourceContext: signalContext
         });
 
         expect(await engine.getDefinitions()).to.have.length(1);
       }
     );
 
-    And("a second definition that updates spot price", async () => {
+    And('a second definition that updates spot price', async () => {
       updateContext = await testHelpers.context(sendSignalSource, {
-        camunda: camundaJson,
+        camunda: camundaJson
       });
 
       engine.addSource({
-        sourceContext: updateContext,
+        sourceContext: updateContext
       });
 
       expect(await engine.getDefinitions()).to.have.length(2);
     });
 
     let end, execution;
-    When("engine is executed", async () => {
-      end = engine.waitFor("end");
+    When('engine is executed', async () => {
+      end = engine.waitFor('end');
       execution = await engine.execute();
     });
 
     let tradeTask, spotPriceChanged;
-    Then("trader is considering to trade", async () => {
+    Then('trader is considering to trade', async () => {
       [spotPriceChanged, tradeTask] = execution.getPostponed();
       expect(tradeTask).to.be.ok;
       expect(tradeTask.content.form.fields.price.defaultValue).to.equal(100);
     });
 
-    And("spot price is monitored by process", async () => {
+    And('spot price is monitored by process', async () => {
       expect(spotPriceChanged).to.be.ok;
     });
 
-    When("spot price is updated by second definition", async () => {
+    When('spot price is updated by second definition', async () => {
       const [, updateDefinition] = execution.definitions;
       const [updateProcess] = updateDefinition.getProcesses();
 
-      updateDefinition.on("activity.wait", () => {
+      updateDefinition.on('activity.wait', () => {
         execution.signal({
-          id: "set-spot-price",
+          id: 'set-spot-price',
           form: {
-            newPrice: 110,
-          },
+            newPrice: 110
+          }
         });
       });
 
       updateDefinition.run({ processId: updateProcess.id });
     });
 
-    Then("admin is notified that spot price has been updated", () => {
+    Then('admin is notified that spot price has been updated', () => {
       const [, , adminApprove] = execution.getPostponed();
-      expect(adminApprove).to.have.property("id", "approveSpotPrice");
+      expect(adminApprove).to.have.property('id', 'approveSpotPrice');
       expect(adminApprove.content)
-        .to.have.property("form")
-        .with.property("fields")
-        .with.property("newPrice")
-        .with.property("defaultValue", 110);
+        .to.have.property('form')
+        .with.property('fields')
+        .with.property('newPrice')
+        .with.property('defaultValue', 110);
     });
 
-    And("the tasks can be retrieved by getActivityById", () => {
-      expect(execution.getActivityById("tradeTask").counters).to.have.property(
-        "discarded",
+    And('the tasks can be retrieved by getActivityById', () => {
+      expect(execution.getActivityById('tradeTask').counters).to.have.property(
+        'discarded',
         0
       );
       expect(
-        execution.getActivityById("approveSpotPrice").counters
-      ).to.have.property("taken", 0);
-      expect(execution.getActivityById("not-in-at-all")).to.not.be.ok;
+        execution.getActivityById('approveSpotPrice').counters
+      ).to.have.property('taken', 0);
+      expect(execution.getActivityById('not-in-at-all')).to.not.be.ok;
     });
 
-    When("admin approves new spot price", () => {
+    When('admin approves new spot price', () => {
       execution.signal({
-        id: "approveSpotPrice",
+        id: 'approveSpotPrice',
         form: {
-          newPrice: 110,
-        },
+          newPrice: 110
+        }
       });
     });
 
-    Then("trade task is discarded", async () => {
+    Then('trade task is discarded', async () => {
       [tradeTask, spotPriceChanged] = execution.getPostponed();
-      expect(tradeTask.id).to.equal("tradeTask");
-      expect(spotPriceChanged.id).to.equal("catchSpotUpdate");
-      expect(tradeTask.owner.counters).to.have.property("discarded", 1);
+      expect(tradeTask.id).to.equal('tradeTask');
+      expect(spotPriceChanged.id).to.equal('catchSpotUpdate');
+      expect(tradeTask.owner.counters).to.have.property('discarded', 1);
     });
 
-    And("trade task was discarded", () => {
+    And('trade task was discarded', () => {
       expect(execution.getActivityById(tradeTask.id).counters).to.have.property(
-        "discarded",
+        'discarded',
         1
       );
     });
 
-    And("update price is taken", async () => {
-      expect(spotPriceChanged.owner.counters).to.have.property("taken", 1);
+    And('update price is taken', async () => {
+      expect(spotPriceChanged.owner.counters).to.have.property('taken', 1);
     });
 
-    And("trader is presented new price", () => {
+    And('trader is presented new price', () => {
       expect(tradeTask.content.form.fields.price.defaultValue).to.equal(110);
     });
 
-    When("trader trades", () => {
+    When('trader trades', () => {
       execution.signal({
-        id: "tradeTask",
+        id: 'tradeTask',
         form: {
-          amount: 42,
-        },
+          amount: 42
+        }
       });
     });
 
-    And("trade task is taken", () => {
-      expect(tradeTask.owner.counters).to.have.property("taken", 1);
-      expect(tradeTask.owner.counters).to.have.property("discarded", 1);
+    And('trade task is taken', () => {
+      expect(tradeTask.owner.counters).to.have.property('taken', 1);
+      expect(tradeTask.owner.counters).to.have.property('discarded', 1);
     });
 
-    And("run is completed", async () => {
+    And('run is completed', async () => {
       const [tradeDef, updateDef] = execution.definitions;
 
-      expect(tradeDef).to.have.property("id", "Signals_0");
-      expect(tradeDef.counters).to.have.property("completed", 1);
-      expect(tradeDef.counters).to.have.property("discarded", 0);
+      expect(tradeDef).to.have.property('id', 'Signals_0');
+      expect(tradeDef.counters).to.have.property('completed', 1);
+      expect(tradeDef.counters).to.have.property('discarded', 0);
 
-      expect(updateDef).to.have.property("id", "SendSignals_0");
-      expect(updateDef.counters).to.have.property("completed", 1);
-      expect(updateDef.counters).to.have.property("discarded", 0);
+      expect(updateDef).to.have.property('id', 'SendSignals_0');
+      expect(updateDef.counters).to.have.property('completed', 1);
+      expect(updateDef.counters).to.have.property('discarded', 0);
 
       return end;
     });
 
-    And("execution output has amount and new spot price", async () => {
+    And('execution output has amount and new spot price', async () => {
       expect(execution.environment.output).to.deep.equal({
         amount: 42,
         price: 110,
-        spotPrice: 110,
+        spotPrice: 110
       });
     });
 
-    Given("definition is ran again", async () => {
-      end = engine.waitFor("end");
+    Given('definition is ran again', async () => {
+      end = engine.waitFor('end');
       execution = await engine.execute();
     });
 
-    When("trader trades again", async () => {
+    When('trader trades again', async () => {
       execution.signal({
-        id: "tradeTask",
+        id: 'tradeTask',
         form: {
-          amount: 42,
-        },
+          amount: 42
+        }
       });
     });
 
-    Then("run completes", async () => {
+    Then('run completes', async () => {
       const [tradeDef, updateDef] = execution.definitions;
 
-      expect(tradeDef).to.have.property("id", "Signals_0");
-      expect(tradeDef.counters).to.have.property("completed", 1);
-      expect(tradeDef.counters).to.have.property("discarded", 0);
+      expect(tradeDef).to.have.property('id', 'Signals_0');
+      expect(tradeDef.counters).to.have.property('completed', 1);
+      expect(tradeDef.counters).to.have.property('discarded', 0);
 
-      expect(updateDef).to.have.property("id", "SendSignals_0");
-      expect(updateDef.counters).to.have.property("completed", 0);
-      expect(updateDef.counters).to.have.property("discarded", 0);
+      expect(updateDef).to.have.property('id', 'SendSignals_0');
+      expect(updateDef.counters).to.have.property('completed', 0);
+      expect(updateDef.counters).to.have.property('discarded', 0);
 
       return end;
     });
 
-    And("execution output has amount and new spot price", async () => {
+    And('execution output has amount and new spot price', async () => {
       expect(execution.environment.output).to.deep.equal({
         amount: 42,
         price: 110,
-        spotPrice: 110,
+        spotPrice: 110
       });
     });
 
-    Given("definition is ran again", async () => {
-      end = engine.waitFor("end");
+    Given('definition is ran again', async () => {
+      end = engine.waitFor('end');
       execution = await engine.execute({
         variables: {
-          spotPrice: 120,
-        },
+          spotPrice: 120
+        }
       });
     });
 
-    And("spot price is on the verge to be updated", async () => {
+    And('spot price is on the verge to be updated', async () => {
       const [, updateDefinition] = execution.definitions;
       const [updateProcess] = updateDefinition.getProcesses();
 
@@ -217,219 +215,219 @@ Feature("Multiple sources", () => {
     });
 
     let stopped, state;
-    And("trade is paused", async () => {
-      stopped = engine.waitFor("stop");
+    And('trade is paused', async () => {
+      stopped = engine.waitFor('stop');
       execution.stop();
       state = execution.getState();
     });
 
-    When("engine has stopped", async () => {
+    When('engine has stopped', async () => {
       await stopped;
       expect(execution.stopped).to.be.true;
       expect(engine.stopped).to.be.true;
     });
 
-    Then("postponed activities are still accessible", () => {
+    Then('postponed activities are still accessible', () => {
       const postponed = execution.getPostponed();
       expect(postponed).to.have.length(3);
     });
 
-    When("execution is resumed", async () => {
+    When('execution is resumed', async () => {
       engine = getExtendedEngine();
       engine.recover(state);
-      end = engine.waitFor("end");
+      end = engine.waitFor('end');
       execution = await engine.resume();
     });
 
     let setSpotPrice;
-    Then("trader is ready to trade", () => {
+    Then('trader is ready to trade', () => {
       [, tradeTask, setSpotPrice] = execution.getPostponed();
-      expect(tradeTask).to.have.property("id", "tradeTask");
+      expect(tradeTask).to.have.property('id', 'tradeTask');
     });
 
-    And("spot price is ready to be updated", () => {
-      expect(setSpotPrice).to.have.property("id", "set-spot-price");
+    And('spot price is ready to be updated', () => {
+      expect(setSpotPrice).to.have.property('id', 'set-spot-price');
     });
 
-    Given("spot price is updated", () => {
+    Given('spot price is updated', () => {
       setSpotPrice.signal({
         form: {
-          newPrice: 100,
-        },
+          newPrice: 100
+        }
       });
     });
 
-    And("trade is paused", async () => {
+    And('trade is paused', async () => {
       execution.stop();
       state = execution.getState();
     });
 
-    When("execution is recovered and resumed", async () => {
+    When('execution is recovered and resumed', async () => {
       engine = getExtendedEngine();
       engine.recover(state);
-      end = engine.waitFor("end");
+      end = engine.waitFor('end');
       execution = await engine.resume();
     });
 
     let approveSpotPrice;
-    Then("trader is ready to trade", () => {
+    Then('trader is ready to trade', () => {
       [, tradeTask, approveSpotPrice] = execution.getPostponed();
-      expect(tradeTask).to.have.property("id", "tradeTask");
+      expect(tradeTask).to.have.property('id', 'tradeTask');
     });
 
-    When("admin approves new spot price", () => {
-      expect(approveSpotPrice).to.have.property("id", "approveSpotPrice");
+    When('admin approves new spot price', () => {
+      expect(approveSpotPrice).to.have.property('id', 'approveSpotPrice');
       expect(approveSpotPrice.content)
-        .to.have.property("form")
-        .with.property("fields")
-        .with.property("newPrice")
-        .with.property("defaultValue", 100);
+        .to.have.property('form')
+        .with.property('fields')
+        .with.property('newPrice')
+        .with.property('defaultValue', 100);
 
       approveSpotPrice.signal({
         form: {
-          newPrice: 100,
-        },
+          newPrice: 100
+        }
       });
     });
 
-    When("trader resumes trade", async () => {
+    When('trader resumes trade', async () => {
       execution.signal({
-        id: "tradeTask",
+        id: 'tradeTask',
         form: {
-          amount: 52,
-        },
+          amount: 52
+        }
       });
     });
 
-    Then("run completes", async () => {
+    Then('run completes', async () => {
       const [tradeDef, updateDef] = execution.definitions;
 
-      expect(tradeDef).to.have.property("id", "Signals_0");
-      expect(tradeDef.counters, "Signals_0 counters").to.have.property(
-        "completed",
+      expect(tradeDef).to.have.property('id', 'Signals_0');
+      expect(tradeDef.counters, 'Signals_0 counters').to.have.property(
+        'completed',
         1
       );
-      expect(tradeDef.counters, "Signals_0 counters").to.have.property(
-        "discarded",
+      expect(tradeDef.counters, 'Signals_0 counters').to.have.property(
+        'discarded',
         0
       );
 
-      expect(updateDef).to.have.property("id", "SendSignals_0");
-      expect(updateDef.counters, "SendSignals_0 counters").to.have.property(
-        "completed",
+      expect(updateDef).to.have.property('id', 'SendSignals_0');
+      expect(updateDef.counters, 'SendSignals_0 counters').to.have.property(
+        'completed',
         1
       );
-      expect(updateDef.counters, "SendSignals_0 counters").to.have.property(
-        "discarded",
+      expect(updateDef.counters, 'SendSignals_0 counters').to.have.property(
+        'discarded',
         0
       );
 
       return end;
     });
 
-    And("execution output has amount and new approved spot price", async () => {
+    And('execution output has amount and new approved spot price', async () => {
       expect(execution.environment.output).to.deep.equal({
         amount: 52,
         price: 100,
-        spotPrice: 100,
+        spotPrice: 100
       });
     });
 
-    Given("the same engine is executed again", async () => {
+    Given('the same engine is executed again', async () => {
       execution = await engine.execute();
     });
 
-    And("state is saved when trader is trading", async () => {
+    And('state is saved when trader is trading', async () => {
       state = execution.getState();
     });
 
-    When("execution is recovered and resumed", async () => {
+    When('execution is recovered and resumed', async () => {
       engine = getExtendedEngine();
       engine.recover(state);
       execution = await engine.resume();
     });
 
-    And("spot price is updated", async () => {
+    And('spot price is updated', async () => {
       const [, updateDefinition] = execution.definitions;
       const [updateProcess] = updateDefinition.getProcesses();
 
-      updateDefinition.on("activity.wait", () => {
+      updateDefinition.on('activity.wait', () => {
         execution.signal({
-          id: "set-spot-price",
+          id: 'set-spot-price',
           form: {
-            newPrice: 200,
-          },
+            newPrice: 200
+          }
         });
       });
 
       updateDefinition.run({ processId: updateProcess.id });
     });
 
-    Then("admin approves new spot price", () => {
+    Then('admin approves new spot price', () => {
       execution.signal({
-        id: "approveSpotPrice",
+        id: 'approveSpotPrice',
         form: {
-          newPrice: 200,
-        },
+          newPrice: 200
+        }
       });
     });
 
-    When("trader resumes trade", async () => {
-      end = engine.waitFor("end");
+    When('trader resumes trade', async () => {
+      end = engine.waitFor('end');
       execution.signal({
-        id: "tradeTask",
+        id: 'tradeTask',
         form: {
-          amount: 52,
-        },
+          amount: 52
+        }
       });
     });
 
-    Then("run completes", async () => {
+    Then('run completes', async () => {
       const [tradeDef, updateDef] = execution.definitions;
 
-      expect(tradeDef).to.have.property("id", "Signals_0");
-      expect(tradeDef.counters, "Signals_0 counters").to.have.property(
-        "completed",
+      expect(tradeDef).to.have.property('id', 'Signals_0');
+      expect(tradeDef.counters, 'Signals_0 counters').to.have.property(
+        'completed',
         1
       );
-      expect(tradeDef.counters, "Signals_0 counters").to.have.property(
-        "discarded",
+      expect(tradeDef.counters, 'Signals_0 counters').to.have.property(
+        'discarded',
         0
       );
 
-      expect(updateDef).to.have.property("id", "SendSignals_0");
-      expect(updateDef.counters, "SendSignals_0 counters").to.have.property(
-        "completed",
+      expect(updateDef).to.have.property('id', 'SendSignals_0');
+      expect(updateDef.counters, 'SendSignals_0 counters').to.have.property(
+        'completed',
         1
       );
-      expect(updateDef.counters, "SendSignals_0 counters").to.have.property(
-        "discarded",
+      expect(updateDef.counters, 'SendSignals_0 counters').to.have.property(
+        'discarded',
         0
       );
 
       return end;
     });
 
-    And("execution output has amount and new approved spot price", async () => {
+    And('execution output has amount and new approved spot price', async () => {
       expect(execution.environment.output).to.deep.equal({
         amount: 52,
         price: 200,
-        spotPrice: 200,
+        spotPrice: 200
       });
     });
   });
 
-  Scenario("edge cases", () => {
+  Scenario('edge cases', () => {
     let engine;
-    Given("two sources", async () => {
-      engine = new Engine({ name: "Edge case" });
+    Given('two sources', async () => {
+      engine = new Engine({ name: 'Edge case' });
       engine.addSource({
         sourceContext: await testHelpers.context(`
         <definitions id="Def_0" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
           <process id="Process_0" isExecutable="true">
             <userTask id="task_0" />
           </process>
-        </definitions>`),
+        </definitions>`)
       });
       engine.addSource({
         sourceContext: await testHelpers.context(`
@@ -437,81 +435,81 @@ Feature("Multiple sources", () => {
           <process id="Process_1" isExecutable="true">
             <userTask id="task_1" />
           </process>
-        </definitions>`),
+        </definitions>`)
       });
     });
 
-    When("executed", () => {
+    When('executed', () => {
       return engine.execute();
     });
 
-    Then("both definitions has started", () => {
+    Then('both definitions has started', () => {
       expect(engine.execution.definitions.length).to.equal(2);
     });
 
-    When("for some reason the first definition is stopped", () => {
+    When('for some reason the first definition is stopped', () => {
       engine.execution.definitions[0].stop();
     });
 
-    Then("engine is still running", () => {
+    Then('engine is still running', () => {
       expect(engine.stopped).to.be.false;
       expect(engine.execution.stopped).to.be.false;
     });
 
-    When("the second definition is stopped", () => {
+    When('the second definition is stopped', () => {
       engine.execution.definitions[1].stop();
     });
 
-    Then("execution is stopped", () => {
+    Then('execution is stopped', () => {
       expect(engine.execution.stopped).to.be.true;
     });
 
-    And("the engine is also flagged as stopped", () => {
+    And('the engine is also flagged as stopped', () => {
       expect(engine.stopped).to.be.true;
     });
 
-    Given("engine is executed again", () => {
+    Given('engine is executed again', () => {
       return engine.execute();
     });
 
-    When("second definition hickups another start event", () => {
+    When('second definition hickups another start event', () => {
       expect(engine.execution.definitions).to.have.length(2);
       engine.execution.definitions[1].broker.publish(
-        "event",
-        "definition.enter",
+        'event',
+        'definition.enter',
         {}
       );
     });
 
-    Then("the engine ignores that one", () => {
+    Then('the engine ignores that one', () => {
       expect(engine.execution.definitions).to.have.length(2);
     });
 
-    Given("engine is executed again", () => {
+    Given('engine is executed again', () => {
       return engine.execute();
     });
 
-    When("first definition sends process output", () => {
-      engine.execution.definitions[0].broker.publish("event", "process.end", {
+    When('first definition sends process output', () => {
+      engine.execution.definitions[0].broker.publish('event', 'process.end', {
         output: {
-          foo: "bar",
-          data: { col: 1 },
-        },
+          foo: 'bar',
+          data: { col: 1 }
+        }
       });
     });
 
-    And("second definition sends process undefined process output", () => {
+    And('second definition sends process undefined process output', () => {
       engine.execution.definitions[0].broker.publish(
-        "event",
-        "process.end",
+        'event',
+        'process.end',
         {}
       );
     });
 
-    Then("the engine ignores the second process output", () => {
+    Then('the engine ignores the second process output', () => {
       expect(engine.environment.output).to.deep.equal({
-        foo: "bar",
-        data: { col: 1 },
+        foo: 'bar',
+        data: { col: 1 }
       });
     });
   });
@@ -519,12 +517,12 @@ Feature("Multiple sources", () => {
 
 function getExtendedEngine(options) {
   const engine = new Engine({
-    name: "Signal feature",
+    name: 'Signal feature',
     settings: {
       strict: true,
       dataStores: new DataStores({
-        SpotPriceDb: { price: 100 },
-      }),
+        SpotPriceDb: { price: 100 }
+      })
     },
     services: {
       getSpotPrice(msg, callback) {
@@ -533,7 +531,7 @@ function getExtendedEngine(options) {
           this.environment.settings.dataStores.getDataStore(msg.content.db)
             .price
         );
-      },
+      }
     },
     ...options,
     extensions: {
@@ -541,10 +539,10 @@ function getExtendedEngine(options) {
         if (activity.behaviour.extensionElements) {
           for (const extension of activity.behaviour.extensionElements.values) {
             switch (extension.$type) {
-              case "camunda:FormData":
+              case 'camunda:FormData':
                 formFormatting(activity, context, extension);
                 break;
-              case "camunda:InputOutput":
+              case 'camunda:InputOutput':
                 ioFormatting(activity, context, extension);
                 break;
             }
@@ -557,15 +555,15 @@ function getExtendedEngine(options) {
           activity.isStart &&
           activity.eventDefinitions &&
           activity.eventDefinitions.find(
-            ({ type }) => type === "bpmn:SignalEventDefinition"
+            ({ type }) => type === 'bpmn:SignalEventDefinition'
           )
         ) {
-          activity.on("end", (api) => {
+          activity.on('end', (api) => {
             activity.environment.variables.message = api.content.output;
           });
         }
         if (activity.behaviour.resultVariable) {
-          activity.on("end", (api) => {
+          activity.on('end', (api) => {
             activity.environment.output[activity.behaviour.resultVariable] =
               api.content.output;
           });
@@ -573,34 +571,34 @@ function getExtendedEngine(options) {
       },
       datastore(activity) {
         if (activity.behaviour.dataInputAssociations) {
-          activity.on("enter", () => {
-            activity.broker.publish("format", "run.enter.format", {
+          activity.on('enter', () => {
+            activity.broker.publish('format', 'run.enter.format', {
               db: activity.behaviour.dataInputAssociations[0].behaviour
-                .sourceRef.id,
+                .sourceRef.id
             });
           });
         }
 
         if (activity.behaviour.dataOutputAssociations) {
-          activity.on("end", (api) => {
+          activity.on('end', (api) => {
             const db =
               activity.behaviour.dataOutputAssociations[0].behaviour.targetRef
                 .id;
             activity.environment.settings.dataStores.setDataStore(db, {
-              ...api.content.output,
+              ...api.content.output
             });
           });
         }
-      },
-    },
+      }
+    }
   });
 
   engine.broker.subscribeTmp(
-    "event",
-    "activity.signal",
+    'event',
+    'activity.signal',
     (routingKey, msg) => {
       engine.execution.signal(msg.content.message, {
-        ignoreSameDefinition: true,
+        ignoreSameDefinition: true
       });
     },
     { noAck: true }
@@ -616,7 +614,7 @@ function ServiceExpression(activity) {
   return {
     type,
     expression,
-    execute,
+    execute
   };
   function execute(executionMessage, callback) {
     const serviceFn = environment.resolveExpression(
@@ -632,11 +630,11 @@ function ServiceExpression(activity) {
 function formFormatting(activity, context, formData) {
   const { broker, environment } = activity;
   broker.subscribeTmp(
-    "event",
-    "activity.enter",
+    'event',
+    'activity.enter',
     (_, message) => {
       const form = {
-        fields: {},
+        fields: {}
       };
       formData.fields.forEach((field) => {
         form.fields[field.id] = { ...field };
@@ -645,7 +643,7 @@ function formFormatting(activity, context, formData) {
           message
         );
       });
-      broker.publish("format", "run.form", { form });
+      broker.publish('format', 'run.form', { form });
     },
     { noAck: true }
   );
@@ -655,8 +653,8 @@ function ioFormatting(activity, context, ioData) {
   const { broker, environment } = activity;
   if (ioData.inputParameters) {
     broker.subscribeTmp(
-      "event",
-      "activity.enter",
+      'event',
+      'activity.enter',
       (_, message) => {
         const input = ioData.inputParameters.reduce((result, data) => {
           result[data.name] = environment.resolveExpression(
@@ -665,15 +663,15 @@ function ioFormatting(activity, context, ioData) {
           );
           return result;
         }, {});
-        broker.publish("format", "run.input", { input });
+        broker.publish('format', 'run.input', { input });
       },
       { noAck: true }
     );
   }
   if (ioData.outputParameters) {
     broker.subscribeTmp(
-      "event",
-      "activity.execution.completed",
+      'event',
+      'activity.execution.completed',
       (_, message) => {
         const output = {};
         ioData.outputParameters.forEach((data) => {
@@ -685,9 +683,9 @@ function ioFormatting(activity, context, ioData) {
 
         Object.assign(environment.output, output);
 
-        broker.publish("format", "run.output", { output });
+        broker.publish('format', 'run.output', { output });
       },
-      { noAck: true, consumerTag: "_camunda_io" }
+      { noAck: true, consumerTag: '_camunda_io' }
     );
   }
 }

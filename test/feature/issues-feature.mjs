@@ -1,9 +1,9 @@
-import * as factory from "../helpers/factory.mjs";
-import { Engine } from "../../index.mjs";
-import { EventEmitter } from "events";
+import * as factory from '../helpers/factory.mjs';
+import { Engine } from '../../index.mjs';
+import { EventEmitter } from 'events';
 
-Feature("Issues", () => {
-  Scenario("Save state on wait - issue #105", () => {
+Feature('Issues', () => {
+  Scenario('Save state on wait - issue #105', () => {
     let source1, source2;
     before(() => {
       source1 = `<?xml version="1.0" encoding="UTF-8"?>
@@ -110,14 +110,14 @@ Feature("Issues", () => {
       </bpmn:definitions>`;
     });
 
-    describe("first source", () => {
+    describe('first source', () => {
       let engine, options;
       const states = [];
       Given(
-        "one service, two exclusive gateways, one user task with save state extension, and one loopback flow",
+        'one service, two exclusive gateways, one user task with save state extension, and one loopback flow',
         async () => {
           options = {
-            name: "issue 105",
+            name: 'issue 105',
             source: source1,
             services: {
               async doTask1(scope, callback) {
@@ -128,19 +128,19 @@ Feature("Issues", () => {
                 await sleep(50); // calling other heavy service...
                 scope.environment.variables.passTask2--;
                 return callback(null);
-              },
+              }
             },
             extensions: {
               listenUserTask(activity) {
-                if (activity.id !== "UserTask") return;
+                if (activity.id !== 'UserTask') return;
 
-                activity.on("wait", async (api) => {
-                  api.owner.logger.debug("##### log state immediately in wait");
+                activity.on('wait', async (api) => {
+                  api.owner.logger.debug('##### log state immediately in wait');
                   states.push(JSON.stringify(await engine.getState()));
-                  engine.emit("wait", api);
+                  engine.emit('wait', api);
                 });
-              },
-            },
+              }
+            }
           };
 
           function sleep(msec) {
@@ -152,118 +152,118 @@ Feature("Issues", () => {
       );
 
       let execution, end, wait;
-      When("definition is ran", async () => {
+      When('definition is ran', async () => {
         engine = Engine({
           ...options,
           variables: {
-            passTask2: 1,
-          },
+            passTask2: 1
+          }
         });
 
-        end = engine.waitFor("end");
-        wait = engine.waitFor("wait");
+        end = engine.waitFor('end');
+        wait = engine.waitFor('wait');
 
         execution = await engine.execute();
       });
 
       let userApi;
-      Then("user task waits for signal", async () => {
+      Then('user task waits for signal', async () => {
         userApi = await wait;
       });
 
-      When("signaled", () => {
+      When('signaled', () => {
         userApi.signal();
       });
 
-      Then("execution completes", () => {
+      Then('execution completes', () => {
         return end;
       });
 
-      And("user task was discarded once", () => {
-        const task = execution.getActivityById("UserTask");
-        expect(task.counters).to.have.property("taken", 1);
-        expect(task.counters).to.have.property("discarded", 1);
+      And('user task was discarded once', () => {
+        const task = execution.getActivityById('UserTask');
+        expect(task.counters).to.have.property('taken', 1);
+        expect(task.counters).to.have.property('discarded', 1);
       });
 
-      And("end was discarded thrice", () => {
-        const task = execution.getActivityById("End");
-        expect(task.counters).to.have.property("taken", 1);
-        expect(task.counters).to.have.property("discarded", 3);
+      And('end was discarded thrice', () => {
+        const task = execution.getActivityById('End');
+        expect(task.counters).to.have.property('taken', 1);
+        expect(task.counters).to.have.property('discarded', 3);
       });
 
-      When("executed again", async () => {
+      When('executed again', async () => {
         engine = Engine({
           ...options,
           variables: {
-            passTask2: 1,
-          },
+            passTask2: 1
+          }
         });
 
-        end = engine.waitFor("end");
-        wait = engine.waitFor("wait");
+        end = engine.waitFor('end');
+        wait = engine.waitFor('wait');
 
         execution = await engine.execute();
       });
 
-      Then("user task waits for signal again", () => {
+      Then('user task waits for signal again', () => {
         return wait;
       });
 
-      Given("run is stopped", () => {
+      Given('run is stopped', () => {
         engine.stop();
       });
 
-      When("execution is resumed", async () => {
-        wait = engine.waitFor("wait");
-        end = engine.waitFor("end");
+      When('execution is resumed', async () => {
+        wait = engine.waitFor('wait');
+        end = engine.waitFor('end');
 
         execution = await engine.resume();
       });
 
-      Then("resumed user task waits for signal", async () => {
+      Then('resumed user task waits for signal', async () => {
         userApi = await wait;
       });
 
-      When("signaled", () => {
+      When('signaled', () => {
         userApi.signal();
       });
 
-      Then("resumed execution completes", () => {
+      Then('resumed execution completes', () => {
         return end;
       });
 
-      And("user task was discarded once", () => {
-        const task = execution.getActivityById("UserTask");
-        expect(task.counters).to.have.property("taken", 1);
-        expect(task.counters).to.have.property("discarded", 1);
+      And('user task was discarded once', () => {
+        const task = execution.getActivityById('UserTask');
+        expect(task.counters).to.have.property('taken', 1);
+        expect(task.counters).to.have.property('discarded', 1);
       });
 
-      And("end was discarded thrice", () => {
-        const task = execution.getActivityById("End");
-        expect(task.counters).to.have.property("taken", 1);
-        expect(task.counters).to.have.property("discarded", 3);
+      And('end was discarded thrice', () => {
+        const task = execution.getActivityById('End');
+        expect(task.counters).to.have.property('taken', 1);
+        expect(task.counters).to.have.property('discarded', 3);
       });
 
       When(
-        "execution is recovered with state from first run user task wait",
+        'execution is recovered with state from first run user task wait',
         () => {
           engine = Engine(options);
           engine.recover(JSON.parse(states[0]));
         }
       );
 
-      And("resumed", async () => {
-        end = engine.waitFor("end");
-        wait = engine.waitFor("wait");
+      And('resumed', async () => {
+        end = engine.waitFor('end');
+        wait = engine.waitFor('wait');
 
         let count = 0;
         engine.broker.subscribeTmp(
-          "event",
-          "activity.discard",
+          'event',
+          'activity.discard',
           (_, msg) => {
-            if (msg.content.id === "UserTask") {
+            if (msg.content.id === 'UserTask') {
               if (count++ > 3) {
-                throw new Error("Into infinity");
+                throw new Error('Into infinity');
               }
             }
           },
@@ -273,110 +273,110 @@ Feature("Issues", () => {
         execution = await engine.resume();
       });
 
-      Then("user task waits for signal again", async () => {
+      Then('user task waits for signal again', async () => {
         userApi = await wait;
       });
 
-      When("signaled", () => {
+      When('signaled', () => {
         userApi.signal();
       });
 
-      Then("recovered execution completes", () => {
+      Then('recovered execution completes', () => {
         return end;
       });
 
-      And("user task was discarded once", () => {
-        const task = execution.getActivityById("UserTask");
-        expect(task.counters).to.have.property("taken", 1);
-        expect(task.counters).to.have.property("discarded", 1);
+      And('user task was discarded once', () => {
+        const task = execution.getActivityById('UserTask');
+        expect(task.counters).to.have.property('taken', 1);
+        expect(task.counters).to.have.property('discarded', 1);
       });
 
-      And("end was discarded thrice", () => {
-        const task = execution.getActivityById("End");
-        expect(task.counters).to.have.property("taken", 1);
-        expect(task.counters).to.have.property("discarded", 3);
+      And('end was discarded thrice', () => {
+        const task = execution.getActivityById('End');
+        expect(task.counters).to.have.property('taken', 1);
+        expect(task.counters).to.have.property('discarded', 3);
       });
 
-      Given("ran again", async () => {
+      Given('ran again', async () => {
         states.splice(0);
         engine = Engine({
           ...options,
           variables: {
-            passTask2: 1,
-          },
+            passTask2: 1
+          }
         });
-        wait = engine.waitFor("wait");
+        wait = engine.waitFor('wait');
         execution = await engine.execute();
       });
 
-      When("user task is waiting", () => {
+      When('user task is waiting', () => {
         return wait;
       });
 
       let state;
-      Then("state was saved", () => {
+      Then('state was saved', () => {
         expect(states).to.have.length(1);
         state = JSON.parse(states[0]);
       });
 
-      And("end event was not discarded yet", () => {
+      And('end event was not discarded yet', () => {
         expect(
           state.definitions[0].execution.processes[0].execution.children.find(
-            ({ id }) => id === "End"
+            ({ id }) => id === 'End'
           ).counters
         ).to.deep.equal({ taken: 0, discarded: 0 });
       });
 
-      When("definition is recovered with state", async () => {
+      When('definition is recovered with state', async () => {
         engine = Engine(options);
         engine.recover(state);
 
-        end = engine.waitFor("end");
+        end = engine.waitFor('end');
       });
 
-      Then("end event is still not discarded", async () => {
+      Then('end event is still not discarded', async () => {
         const [definition] = await engine.getDefinitions();
-        expect(definition.getActivityById("End").counters).to.deep.equal({
+        expect(definition.getActivityById('End').counters).to.deep.equal({
           taken: 0,
-          discarded: 0,
+          discarded: 0
         });
       });
 
-      When("definition is resumed", async () => {
+      When('definition is resumed', async () => {
         execution = await engine.resume();
       });
 
-      Then("end event is discarded once", () => {
-        expect(execution.getActivityById("End").counters).to.deep.equal({
+      Then('end event is discarded once', () => {
+        expect(execution.getActivityById('End').counters).to.deep.equal({
           taken: 0,
-          discarded: 1,
+          discarded: 1
         });
       });
 
-      When("user task is signaled", async () => {
-        execution.signal({ id: "UserTask" });
+      When('user task is signaled', async () => {
+        execution.signal({ id: 'UserTask' });
       });
 
-      Then("recovered engine execution completes", () => {
+      Then('recovered engine execution completes', () => {
         return end;
       });
 
-      Then("end event is taken once and discarded thrice", () => {
-        expect(execution.getActivityById("End").counters).to.deep.equal({
+      Then('end event is taken once and discarded thrice', () => {
+        expect(execution.getActivityById('End').counters).to.deep.equal({
           taken: 1,
-          discarded: 3,
+          discarded: 3
         });
       });
     });
 
-    describe("second source", () => {
+    describe('second source', () => {
       let engine, options;
       const states = [];
       Given(
-        "one service, two exclusive gateways, one user task with save state extension, and two loopback flows",
+        'one service, two exclusive gateways, one user task with save state extension, and two loopback flows',
         async () => {
           options = {
-            name: "issue 105",
+            name: 'issue 105',
             source: source2,
             services: {
               async doTask1(scope, callback) {
@@ -387,19 +387,19 @@ Feature("Issues", () => {
                 await sleep(50); // calling other heavy service...
                 scope.environment.variables.passTask2--;
                 return callback(null);
-              },
+              }
             },
             extensions: {
               listenUserTask(activity) {
-                if (activity.id !== "UserTask") return;
+                if (activity.id !== 'UserTask') return;
 
-                activity.on("wait", async (api) => {
-                  api.owner.logger.debug("##### log state immediately in wait");
+                activity.on('wait', async (api) => {
+                  api.owner.logger.debug('##### log state immediately in wait');
                   states.push(JSON.stringify(await engine.getState()));
-                  engine.emit("wait", api);
+                  engine.emit('wait', api);
                 });
-              },
-            },
+              }
+            }
           };
 
           function sleep(msec) {
@@ -411,118 +411,118 @@ Feature("Issues", () => {
       );
 
       let execution, end, wait;
-      When("definition is ran", async () => {
+      When('definition is ran', async () => {
         engine = Engine({
           ...options,
           variables: {
-            passTask2: 1,
-          },
+            passTask2: 1
+          }
         });
 
-        end = engine.waitFor("end");
-        wait = engine.waitFor("wait");
+        end = engine.waitFor('end');
+        wait = engine.waitFor('wait');
 
         execution = await engine.execute();
       });
 
       let userApi;
-      Then("user task waits for signal", async () => {
+      Then('user task waits for signal', async () => {
         userApi = await wait;
       });
 
-      When("signaled", () => {
+      When('signaled', () => {
         userApi.signal();
       });
 
-      Then("execution completes", () => {
+      Then('execution completes', () => {
         return end;
       });
 
-      And("user task was discarded twice", () => {
-        const task = execution.getActivityById("UserTask");
-        expect(task.counters).to.have.property("taken", 1);
-        expect(task.counters).to.have.property("discarded", 2);
+      And('user task was discarded twice', () => {
+        const task = execution.getActivityById('UserTask');
+        expect(task.counters).to.have.property('taken', 1);
+        expect(task.counters).to.have.property('discarded', 2);
       });
 
-      And("end was discarded four times", () => {
-        const task = execution.getActivityById("End");
-        expect(task.counters).to.have.property("taken", 1);
-        expect(task.counters).to.have.property("discarded", 4);
+      And('end was discarded four times', () => {
+        const task = execution.getActivityById('End');
+        expect(task.counters).to.have.property('taken', 1);
+        expect(task.counters).to.have.property('discarded', 4);
       });
 
-      When("executed again", async () => {
+      When('executed again', async () => {
         engine = Engine({
           ...options,
           variables: {
-            passTask2: 1,
-          },
+            passTask2: 1
+          }
         });
 
-        end = engine.waitFor("end");
-        wait = engine.waitFor("wait");
+        end = engine.waitFor('end');
+        wait = engine.waitFor('wait');
 
         execution = await engine.execute();
       });
 
-      Then("user task waits for signal again", () => {
+      Then('user task waits for signal again', () => {
         return wait;
       });
 
-      Given("run is stopped", () => {
+      Given('run is stopped', () => {
         engine.stop();
       });
 
-      When("execution is resumed", async () => {
-        wait = engine.waitFor("wait");
-        end = engine.waitFor("end");
+      When('execution is resumed', async () => {
+        wait = engine.waitFor('wait');
+        end = engine.waitFor('end');
 
         execution = await engine.resume();
       });
 
-      Then("resumed user task waits for signal", async () => {
+      Then('resumed user task waits for signal', async () => {
         userApi = await wait;
       });
 
-      When("signaled", () => {
+      When('signaled', () => {
         userApi.signal();
       });
 
-      Then("resumed execution completes", () => {
+      Then('resumed execution completes', () => {
         return end;
       });
 
-      And("user task was discarded twice", () => {
-        const task = execution.getActivityById("UserTask");
-        expect(task.counters).to.have.property("taken", 1);
-        expect(task.counters).to.have.property("discarded", 2);
+      And('user task was discarded twice', () => {
+        const task = execution.getActivityById('UserTask');
+        expect(task.counters).to.have.property('taken', 1);
+        expect(task.counters).to.have.property('discarded', 2);
       });
 
-      And("end was discarded four times", () => {
-        const task = execution.getActivityById("End");
-        expect(task.counters).to.have.property("taken", 1);
-        expect(task.counters).to.have.property("discarded", 4);
+      And('end was discarded four times', () => {
+        const task = execution.getActivityById('End');
+        expect(task.counters).to.have.property('taken', 1);
+        expect(task.counters).to.have.property('discarded', 4);
       });
 
       When(
-        "execution is recovered with state from first run user task wait",
+        'execution is recovered with state from first run user task wait',
         () => {
           engine = Engine(options);
           engine.recover(JSON.parse(states[0]));
         }
       );
 
-      And("resumed", async () => {
-        end = engine.waitFor("end");
-        wait = engine.waitFor("wait");
+      And('resumed', async () => {
+        end = engine.waitFor('end');
+        wait = engine.waitFor('wait');
 
         let count = 0;
         engine.broker.subscribeTmp(
-          "event",
-          "activity.discard",
+          'event',
+          'activity.discard',
           (_, msg) => {
-            if (msg.content.id === "UserTask") {
+            if (msg.content.id === 'UserTask') {
               if (count++ > 3) {
-                throw new Error("Into infinity");
+                throw new Error('Into infinity');
               }
             }
           },
@@ -532,109 +532,109 @@ Feature("Issues", () => {
         execution = await engine.resume();
       });
 
-      Then("user task waits for signal again", async () => {
+      Then('user task waits for signal again', async () => {
         userApi = await wait;
       });
 
-      When("signaled", () => {
+      When('signaled', () => {
         userApi.signal();
       });
 
-      Then("recovered execution completes", () => {
+      Then('recovered execution completes', () => {
         return end;
       });
 
-      And("user task was discarded twice", () => {
-        const task = execution.getActivityById("UserTask");
-        expect(task.counters).to.have.property("taken", 1);
-        expect(task.counters).to.have.property("discarded", 2);
+      And('user task was discarded twice', () => {
+        const task = execution.getActivityById('UserTask');
+        expect(task.counters).to.have.property('taken', 1);
+        expect(task.counters).to.have.property('discarded', 2);
       });
 
-      And("end was discarded four times", () => {
-        const task = execution.getActivityById("End");
-        expect(task.counters).to.have.property("taken", 1);
-        expect(task.counters).to.have.property("discarded", 4);
+      And('end was discarded four times', () => {
+        const task = execution.getActivityById('End');
+        expect(task.counters).to.have.property('taken', 1);
+        expect(task.counters).to.have.property('discarded', 4);
       });
 
-      Given("ran again", async () => {
+      Given('ran again', async () => {
         states.splice(0);
         engine = Engine({
           ...options,
           variables: {
-            passTask2: 1,
-          },
+            passTask2: 1
+          }
         });
-        wait = engine.waitFor("wait");
+        wait = engine.waitFor('wait');
         execution = await engine.execute();
       });
 
-      When("user task is waiting", () => {
+      When('user task is waiting', () => {
         return wait;
       });
 
       let state;
-      Then("state was saved", () => {
+      Then('state was saved', () => {
         expect(states).to.have.length(1);
         state = JSON.parse(states[0]);
       });
 
-      And("end event was not discarded yet", () => {
+      And('end event was not discarded yet', () => {
         expect(
           state.definitions[0].execution.processes[0].execution.children.find(
-            ({ id }) => id === "End"
+            ({ id }) => id === 'End'
           ).counters
         ).to.deep.equal({ taken: 0, discarded: 0 });
       });
 
-      When("definition is recovered with state", async () => {
+      When('definition is recovered with state', async () => {
         engine = Engine(options);
         engine.recover(state);
 
-        end = engine.waitFor("end");
+        end = engine.waitFor('end');
       });
 
-      Then("end event is still not discarded", async () => {
+      Then('end event is still not discarded', async () => {
         const [definition] = await engine.getDefinitions();
-        expect(definition.getActivityById("End").counters).to.deep.equal({
+        expect(definition.getActivityById('End').counters).to.deep.equal({
           taken: 0,
-          discarded: 0,
+          discarded: 0
         });
       });
 
-      When("definition is resumed", async () => {
+      When('definition is resumed', async () => {
         execution = await engine.resume();
       });
 
-      Then("end event is discarded once", () => {
-        expect(execution.getActivityById("End").counters).to.deep.equal({
+      Then('end event is discarded once', () => {
+        expect(execution.getActivityById('End').counters).to.deep.equal({
           taken: 0,
-          discarded: 1,
+          discarded: 1
         });
       });
 
-      When("user task is signaled", async () => {
-        execution.signal({ id: "UserTask" });
+      When('user task is signaled', async () => {
+        execution.signal({ id: 'UserTask' });
       });
 
-      Then("recovered engine execution completes", () => {
+      Then('recovered engine execution completes', () => {
         return end;
       });
 
-      And("user task was taken once and discarded twice", () => {
-        const task = execution.getActivityById("UserTask");
-        expect(task.counters).to.have.property("taken", 1);
-        expect(task.counters).to.have.property("discarded", 2);
+      And('user task was taken once and discarded twice', () => {
+        const task = execution.getActivityById('UserTask');
+        expect(task.counters).to.have.property('taken', 1);
+        expect(task.counters).to.have.property('discarded', 2);
       });
 
-      And("end was taken once and discarded four times", () => {
-        const task = execution.getActivityById("End");
-        expect(task.counters).to.have.property("taken", 1);
-        expect(task.counters).to.have.property("discarded", 4);
+      And('end was taken once and discarded four times', () => {
+        const task = execution.getActivityById('End');
+        expect(task.counters).to.have.property('taken', 1);
+        expect(task.counters).to.have.property('discarded', 4);
       });
     });
   });
 
-  Scenario("Stop and save state on wait - issue #106", () => {
+  Scenario('Stop and save state on wait - issue #106', () => {
     const source = `
     <definitions id="Def_0" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <process id="Process_0" isExecutable="true">
@@ -660,11 +660,11 @@ Feature("Issues", () => {
     let engine, options;
     const states = [];
     Given(
-      "two succeeding user tasks and decision to take third or fourth user task",
+      'two succeeding user tasks and decision to take third or fourth user task',
       async () => {
         options = {
-          name: "issue 106",
-          source,
+          name: 'issue 106',
+          source
         };
       }
     );
@@ -677,167 +677,167 @@ Feature("Issues", () => {
     }
 
     let execution, listener;
-    When("engine is executed with listener on activity wait", async () => {
+    When('engine is executed with listener on activity wait', async () => {
       listener = new EventEmitter();
-      listener.on("activity.wait", onWait);
+      listener.on('activity.wait', onWait);
 
       engine = Engine({
         ...options,
         variables: {
-          takeTask3: 1,
-        },
+          takeTask3: 1
+        }
       });
 
       execution = await engine.execute({ listener });
     });
 
-    Then("execution is stopped and state is saved", () => {
+    Then('execution is stopped and state is saved', () => {
       expect(execution.stopped).to.be.true;
       expect(states).to.have.length(1);
     });
 
-    When("execution is recovered", () => {
+    When('execution is recovered', () => {
       engine = Engine().recover(states.pop());
     });
 
-    Then("first user task is still executing", async () => {
+    Then('first user task is still executing', async () => {
       const [definition] = await engine.getDefinitions();
-      expect(definition.getActivityById("task1")).to.have.property(
-        "status",
-        "executing"
+      expect(definition.getActivityById('task1')).to.have.property(
+        'status',
+        'executing'
       );
     });
 
-    When("execution is resumed with listener", async () => {
+    When('execution is resumed with listener', async () => {
       execution = await engine.resume({ listener });
     });
 
-    And("first user task is signaled", () => {
-      execution.signal({ id: "task1" });
+    And('first user task is signaled', () => {
+      execution.signal({ id: 'task1' });
     });
 
-    Then("first user task was taken", () => {
-      expect(execution.getActivityById("task1").counters).to.deep.equal({
+    Then('first user task was taken', () => {
+      expect(execution.getActivityById('task1').counters).to.deep.equal({
         taken: 1,
-        discarded: 0,
+        discarded: 0
       });
     });
 
-    And("second user task is waiting", () => {
-      expect(execution.getActivityById("task2").counters).to.deep.equal({
+    And('second user task is waiting', () => {
+      expect(execution.getActivityById('task2').counters).to.deep.equal({
         taken: 0,
-        discarded: 0,
+        discarded: 0
       });
     });
 
-    When("execution is recovered", () => {
+    When('execution is recovered', () => {
       engine = Engine().recover(states.pop());
     });
 
-    Then("second user task is still executing", async () => {
+    Then('second user task is still executing', async () => {
       const [definition] = await engine.getDefinitions();
-      expect(definition.getActivityById("task2")).to.have.property(
-        "status",
-        "executing"
+      expect(definition.getActivityById('task2')).to.have.property(
+        'status',
+        'executing'
       );
     });
 
-    When("execution is resumed with listener", async () => {
+    When('execution is resumed with listener', async () => {
       execution = await engine.resume({ listener });
     });
 
-    And("second user task is signaled", () => {
-      execution.signal({ id: "task2" });
+    And('second user task is signaled', () => {
+      execution.signal({ id: 'task2' });
     });
 
-    Then("first user task was taken", () => {
-      expect(execution.getActivityById("task1").counters).to.deep.equal({
+    Then('first user task was taken', () => {
+      expect(execution.getActivityById('task1').counters).to.deep.equal({
         taken: 1,
-        discarded: 0,
+        discarded: 0
       });
     });
 
-    And("second user task was taken", () => {
-      expect(execution.getActivityById("task2").counters).to.deep.equal({
+    And('second user task was taken', () => {
+      expect(execution.getActivityById('task2').counters).to.deep.equal({
         taken: 1,
-        discarded: 0,
+        discarded: 0
       });
     });
 
-    And("third user task is waiting", () => {
-      expect(execution.getActivityById("task3").counters).to.deep.equal({
+    And('third user task is waiting', () => {
+      expect(execution.getActivityById('task3').counters).to.deep.equal({
         taken: 0,
-        discarded: 0,
+        discarded: 0
       });
     });
 
-    And("fourth user task was discarded", () => {
-      expect(execution.getActivityById("task4").counters).to.deep.equal({
+    And('fourth user task was discarded', () => {
+      expect(execution.getActivityById('task4').counters).to.deep.equal({
         taken: 0,
-        discarded: 1,
+        discarded: 1
       });
     });
 
     let end;
-    When("execution is recovered", () => {
+    When('execution is recovered', () => {
       engine = Engine().recover(states.pop());
-      end = engine.waitFor("end");
+      end = engine.waitFor('end');
     });
 
-    Then("third user task is still executing", async () => {
+    Then('third user task is still executing', async () => {
       const [definition] = await engine.getDefinitions();
-      expect(definition.getActivityById("task3")).to.have.property(
-        "status",
-        "executing"
+      expect(definition.getActivityById('task3')).to.have.property(
+        'status',
+        'executing'
       );
     });
 
-    When("execution is resumed with listener", async () => {
+    When('execution is resumed with listener', async () => {
       execution = await engine.resume({ listener });
     });
 
-    And("third user task is signaled", () => {
-      execution.signal({ id: "task3" });
+    And('third user task is signaled', () => {
+      execution.signal({ id: 'task3' });
     });
 
-    Then("first user task was taken", () => {
-      expect(execution.getActivityById("task1").counters).to.deep.equal({
+    Then('first user task was taken', () => {
+      expect(execution.getActivityById('task1').counters).to.deep.equal({
         taken: 1,
-        discarded: 0,
+        discarded: 0
       });
     });
 
-    And("second user task was taken", () => {
-      expect(execution.getActivityById("task2").counters).to.deep.equal({
+    And('second user task was taken', () => {
+      expect(execution.getActivityById('task2').counters).to.deep.equal({
         taken: 1,
-        discarded: 0,
+        discarded: 0
       });
     });
 
-    And("third user task was taken", () => {
-      expect(execution.getActivityById("task3").counters).to.deep.equal({
+    And('third user task was taken', () => {
+      expect(execution.getActivityById('task3').counters).to.deep.equal({
         taken: 1,
-        discarded: 0,
+        discarded: 0
       });
     });
 
-    And("fourth user task was discarded", () => {
-      expect(execution.getActivityById("task4").counters).to.deep.equal({
+    And('fourth user task was discarded', () => {
+      expect(execution.getActivityById('task4').counters).to.deep.equal({
         taken: 0,
-        discarded: 1,
+        discarded: 1
       });
     });
 
-    And("execution completed", () => {
+    And('execution completed', () => {
       return end;
     });
   });
 
-  Scenario("Parallel Join stuck in postponed state - issue #125", () => {
+  Scenario('Parallel Join stuck in postponed state - issue #125', () => {
     async function Start(source) {
       const engine = Engine({
-        name: "issue 125",
-        source,
+        name: 'issue 125',
+        source
       });
 
       const complete = stopOrEnd(engine);
@@ -854,7 +854,7 @@ Feature("Issues", () => {
 
     async function Tick(state) {
       const engine = Engine({
-        name: "issue 125 - recover",
+        name: 'issue 125 - recover'
       }).recover(state);
 
       const complete = stopOrEnd(engine);
@@ -871,14 +871,14 @@ Feature("Issues", () => {
 
     async function Input(state, signalId) {
       const engine = Engine({
-        name: "issue 125 - signal",
+        name: 'issue 125 - signal'
       }).recover(state);
 
       const complete = stopOrEnd(engine);
       const execution = await engine.resume();
 
       execution.signal({
-        id: signalId,
+        id: signalId
       });
 
       execution.stop();
@@ -893,30 +893,30 @@ Feature("Issues", () => {
 
     function stopOrEnd(engine) {
       return new Promise((resolve, reject) => {
-        engine.once("end", onEnd);
-        engine.once("stop", onStop);
-        engine.once("error", onError);
+        engine.once('end', onEnd);
+        engine.once('stop', onStop);
+        engine.once('error', onError);
 
         function onEnd() {
-          engine.removeListener("stop", onStop);
-          engine.removeListener("error", onError);
-          resolve("end");
+          engine.removeListener('stop', onStop);
+          engine.removeListener('error', onError);
+          resolve('end');
         }
         function onStop() {
-          engine.removeListener("end", onEnd);
-          engine.removeListener("error", onError);
-          resolve("stop");
+          engine.removeListener('end', onEnd);
+          engine.removeListener('error', onError);
+          resolve('stop');
         }
         function onError(err) {
-          engine.removeListener("end", onEnd);
-          engine.removeListener("stop", onStop);
+          engine.removeListener('end', onEnd);
+          engine.removeListener('stop', onStop);
           reject(err);
         }
       });
     }
 
     let result;
-    When("forking two user tasks, then join, and immediate stop", async () => {
+    When('forking two user tasks, then join, and immediate stop', async () => {
       const source = `<?xml version="1.0" encoding="UTF-8"?>
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Issue_125" targetNamespace="http://bpmn.io/schema/bpmn">
         <process id="parallel" isExecutable="true">
@@ -938,228 +938,228 @@ Feature("Issues", () => {
       result = await Start(source);
     });
 
-    Then("status is stopped", () => {
-      expect(result.status).to.equal("stop");
+    Then('status is stopped', () => {
+      expect(result.status).to.equal('stop');
     });
 
-    When("ticked", async () => {
+    When('ticked', async () => {
       result = await Tick(result.state);
     });
 
-    Then("user tasks are waiting", () => {
-      expect(result.status).to.equal("stop");
+    Then('user tasks are waiting', () => {
+      expect(result.status).to.equal('stop');
       expect(result.waiting).to.have.length(2);
-      expect(result.waiting[0]).to.have.property("id", "A");
-      expect(result.waiting[1]).to.have.property("id", "B");
+      expect(result.waiting[0]).to.have.property('id', 'A');
+      expect(result.waiting[1]).to.have.property('id', 'B');
     });
 
-    When("first user task is signaled", async () => {
-      result = await Input(result.state, "A");
+    When('first user task is signaled', async () => {
+      result = await Input(result.state, 'A');
     });
 
-    Then("second user task is still waiting", () => {
-      expect(result.status).to.equal("stop");
-      expect(result.waiting.find(({ id }) => id === "B")).to.be.ok;
+    Then('second user task is still waiting', () => {
+      expect(result.status).to.equal('stop');
+      expect(result.waiting.find(({ id }) => id === 'B')).to.be.ok;
     });
 
-    When("ticked", async () => {
+    When('ticked', async () => {
       result = await Tick(result.state);
     });
 
-    Then("second user task is still waiting", () => {
-      expect(result.status).to.equal("stop");
-      expect(result.waiting.find(({ id }) => id === "B")).to.be.ok;
+    Then('second user task is still waiting', () => {
+      expect(result.status).to.equal('stop');
+      expect(result.waiting.find(({ id }) => id === 'B')).to.be.ok;
     });
 
-    When("second user task is signaled", async () => {
-      result = await Input(result.state, "B");
+    When('second user task is signaled', async () => {
+      result = await Input(result.state, 'B');
     });
 
-    Then("no user task is waiting", () => {
-      expect(result.waiting.some(({ type }) => type === "bpmn:UserTask")).to.not
+    Then('no user task is waiting', () => {
+      expect(result.waiting.some(({ type }) => type === 'bpmn:UserTask')).to.not
         .be.ok;
     });
 
-    And("run has completed", () => {
-      expect(result.status).to.equal("end");
+    And('run has completed', () => {
+      expect(result.status).to.equal('end');
     });
   });
 
-  Scenario("One or the other manual task - issue #138", () => {
+  Scenario('One or the other manual task - issue #138', () => {
     let engine, execution;
     When(
-      "forking two manual tasks, then signal to cancel the other",
+      'forking two manual tasks, then signal to cancel the other',
       async () => {
-        const source = factory.resource("one-or-the-other.bpmn");
+        const source = factory.resource('one-or-the-other.bpmn');
 
         engine = Engine({
-          source,
+          source
         });
 
         execution = await engine.execute();
       }
     );
 
-    Then("execution waits for both tasks", () => {
+    Then('execution waits for both tasks', () => {
       const postponed = execution.getPostponed();
-      expect(postponed.find(({ id }) => id === "task1")).to.be.ok;
-      expect(postponed.find(({ id }) => id === "task2")).to.be.ok;
+      expect(postponed.find(({ id }) => id === 'task1')).to.be.ok;
+      expect(postponed.find(({ id }) => id === 'task2')).to.be.ok;
     });
 
     let ended;
-    When("first task is signaled", () => {
-      ended = engine.waitFor("end");
-      execution.signal({ id: "task1" });
+    When('first task is signaled', () => {
+      ended = engine.waitFor('end');
+      execution.signal({ id: 'task1' });
     });
 
-    Then("execution completes", () => {
+    Then('execution completes', () => {
       return ended;
     });
 
-    And("second task was discarded", () => {
-      expect(execution.getActivityById("task2").counters).to.include({
+    And('second task was discarded', () => {
+      expect(execution.getActivityById('task2').counters).to.include({
         taken: 0,
-        discarded: 1,
+        discarded: 1
       });
     });
 
-    When("ran again", async () => {
+    When('ran again', async () => {
       execution = await engine.execute();
     });
 
-    When("second task is signaled", () => {
-      ended = engine.waitFor("end");
-      execution.signal({ id: "task2" });
+    When('second task is signaled', () => {
+      ended = engine.waitFor('end');
+      execution.signal({ id: 'task2' });
     });
 
-    Then("execution completes", () => {
+    Then('execution completes', () => {
       return ended;
     });
 
-    And("second task was taken", () => {
-      expect(execution.getActivityById("task2").counters).to.include({
+    And('second task was taken', () => {
+      expect(execution.getActivityById('task2').counters).to.include({
         taken: 1,
-        discarded: 0,
+        discarded: 0
       });
     });
 
-    And("firsts task was discarded", () => {
-      expect(execution.getActivityById("task1").counters).to.include({
+    And('firsts task was discarded', () => {
+      expect(execution.getActivityById('task1').counters).to.include({
         taken: 0,
-        discarded: 1,
+        discarded: 1
       });
     });
   });
 
   Scenario(
-    "Get name and association of a DataObject (BPMN:DataObjectReference) - issue 139",
+    'Get name and association of a DataObject (BPMN:DataObjectReference) - issue 139',
     () => {
       let engine, task;
-      When("activity have properties and DataObject references", async () => {
-        const source = factory.resource("issue-139.bpmn");
+      When('activity have properties and DataObject references', async () => {
+        const source = factory.resource('issue-139.bpmn');
 
         const listener = new EventEmitter();
-        listener.on("activity.start", (activityApi) => {
-          if (activityApi.type === "bpmn:Task") {
+        listener.on('activity.start', (activityApi) => {
+          if (activityApi.type === 'bpmn:Task') {
             task = activityApi;
           }
         });
 
         engine = Engine({
           source,
-          listener,
+          listener
         });
 
         await engine.execute();
       });
 
-      Then("activity contains properties and data object references", () => {
+      Then('activity contains properties and data object references', () => {
         expect(task.content.properties)
-          .to.be.an("object")
-          .with.property("Property_0qusu4o");
+          .to.be.an('object')
+          .with.property('Property_0qusu4o');
       });
     }
   );
 
-  Scenario("boundary timeout", () => {
+  Scenario('boundary timeout', () => {
     let engine, execution;
-    When("a flow with user task and a bound timeout is executed", async () => {
-      const source = factory.resource("boundary-timeout.bpmn");
+    When('a flow with user task and a bound timeout is executed', async () => {
+      const source = factory.resource('boundary-timeout.bpmn');
 
       engine = Engine({
         source,
-        timers: TimersWithoutScope(),
+        timers: TimersWithoutScope()
       });
 
       execution = await engine.execute();
     });
 
-    Then("user task is waiting to be signaled", () => {
+    Then('user task is waiting to be signaled', () => {
       const postponed = execution.getPostponed();
-      expect(postponed.find(({ id }) => id === "userTask")).to.be.ok;
+      expect(postponed.find(({ id }) => id === 'userTask')).to.be.ok;
     });
 
     let ended;
-    When("user task is signaled", () => {
-      ended = engine.waitFor("end");
-      execution.signal({ id: "userTask" });
+    When('user task is signaled', () => {
+      ended = engine.waitFor('end');
+      execution.signal({ id: 'userTask' });
     });
 
-    Then("execution completes", () => {
+    Then('execution completes', () => {
       return ended;
     });
 
-    And("user task was taken", () => {
-      expect(execution.getActivityById("userTask").counters).to.include({
+    And('user task was taken', () => {
+      expect(execution.getActivityById('userTask').counters).to.include({
         taken: 1,
-        discarded: 0,
+        discarded: 0
       });
     });
 
-    And("timeout was was discarded", () => {
+    And('timeout was was discarded', () => {
       expect(
-        execution.getActivityById("boundTimeoutEvent").counters
+        execution.getActivityById('boundTimeoutEvent').counters
       ).to.include({
         taken: 0,
-        discarded: 1,
+        discarded: 1
       });
     });
 
-    And("no timers was left lingering", () => {
+    And('no timers was left lingering', () => {
       expect(execution.environment.timers.executing).to.have.length(0);
     });
 
-    When("executed again", async () => {
-      ended = engine.waitFor("end");
+    When('executed again', async () => {
+      ended = engine.waitFor('end');
       execution = await engine.execute();
     });
 
-    Then("execution completes", () => {
+    Then('execution completes', () => {
       return ended;
     });
 
-    And("user task was discarded", () => {
-      expect(execution.getActivityById("userTask").counters).to.include({
+    And('user task was discarded', () => {
+      expect(execution.getActivityById('userTask').counters).to.include({
         taken: 0,
-        discarded: 1,
+        discarded: 1
       });
     });
 
-    And("timeout was taken", () => {
+    And('timeout was taken', () => {
       expect(
-        execution.getActivityById("boundTimeoutEvent").counters
+        execution.getActivityById('boundTimeoutEvent').counters
       ).to.include({
         taken: 1,
-        discarded: 0,
+        discarded: 0
       });
     });
 
-    And("no timers was left lingering", () => {
+    And('no timers was left lingering', () => {
       expect(execution.environment.timers.executing).to.have.length(0);
     });
   });
 
-  Feature("issue 144 - strip id from broadcasted signal", () => {
+  Feature('issue 144 - strip id from broadcasted signal', () => {
     const source = `<?xml version="1.0" encoding="UTF-8"?>
     <definitions id="Definitions_0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
@@ -1178,25 +1178,28 @@ Feature("Issues", () => {
     </definitions>`;
 
     let engine;
-    Given("process with user task and a tripple looped user task", async () => {
+    Given('process with user task and a tripple looped user task', async () => {
       const listener = new EventEmitter();
       engine = new Engine({
-        name: "Engine",
+        name: 'Engine',
         source,
         listener,
         extensions: {
           stripSignalId(activity, context) {
-            if (activity.type === "bpmn:Process") return;
+            if (activity.type === 'bpmn:Process') return;
 
-            const formatQ = activity.broker.getQueue("format-run-q");
-            activity.on("activity.execution.completed", ({ content }) => {
+            const formatQ = activity.broker.getQueue('format-run-q');
+            activity.on('activity.execution.completed', ({ content }) => {
               const rawOutput = content.output;
               if (!rawOutput) return;
 
               let output;
               if (content.isMultiInstance) {
-                output = rawOutput.map(({ id, executionId, ...rest }) => {
-                  // eslint-disable-line no-unused-vars
+                output = rawOutput.map((rawOut) => {
+                  const rest = { ...rawOut };
+                  // no need to show these in the output
+                  delete rest.executionId;
+                  delete rest.id;
                   return rest;
                 });
               } else {
@@ -1205,73 +1208,73 @@ Feature("Issues", () => {
               }
 
               formatQ.queueMessage(
-                { routingKey: "run.output.format" },
+                { routingKey: 'run.output.format' },
                 { output }
               );
             });
 
-            activity.on("activity.end", (elementApi) => {
+            activity.on('activity.end', (elementApi) => {
               if (!elementApi.content.output) return;
               context.environment.output[elementApi.id] =
                 elementApi.content.output;
             });
-          },
-        },
+          }
+        }
       });
     });
 
     let execution;
-    When("executed", async () => {
+    When('executed', async () => {
       execution = await engine.execute();
     });
 
-    Then("execution is waiting for user task", () => {
-      expect(execution.getPostponed()[0]).to.have.property("id", "task");
+    Then('execution is waiting for user task', () => {
+      expect(execution.getPostponed()[0]).to.have.property('id', 'task');
     });
 
-    When("execution is signaled with user task id", () => {
-      execution.signal({ id: "task", myvar: 1 });
+    When('execution is signaled with user task id', () => {
+      execution.signal({ id: 'task', myvar: 1 });
     });
 
     let looped;
-    Then("execution is waiting for looped user task", () => {
+    Then('execution is waiting for looped user task', () => {
       const postponed = execution.getPostponed();
-      expect(postponed[0]).to.have.property("id", "loop");
+      expect(postponed[0]).to.have.property('id', 'loop');
       looped = postponed[0].getExecuting();
       expect(looped).to.have.length(3);
     });
 
     let end;
-    When("execution is signaled with looped iterations execution id", () => {
-      end = execution.waitFor("end");
+    When('execution is signaled with looped iterations execution id', () => {
+      end = execution.waitFor('end');
       execution.signal({
         executionId: looped.pop().content.executionId,
-        myvar: 1,
+        myvar: 1
       });
       execution.signal({
         executionId: looped.pop().content.executionId,
-        myvar: 1,
+        myvar: 1
       });
       execution.signal({
         executionId: looped.pop().content.executionId,
-        myvar: 1,
+        myvar: 1
       });
     });
 
     let result;
-    Then("execution completes", async () => {
+    Then('execution completes', async () => {
       result = await end;
     });
 
-    And("id and execution id was stripped from output", () => {
+    And('id and execution id was stripped from output', () => {
       expect(result.environment.output).to.deep.equal({
         task: { myvar: 1 },
-        loop: [{ myvar: 1 }, { myvar: 1 }, { myvar: 1 }],
+        loop: [{ myvar: 1 }, { myvar: 1 }, { myvar: 1 }]
       });
     });
   });
 
-  Feature("issue 145 - throw error inside task", () => {
+  Feature('issue 145 - throw error inside task', () => {
     const source = `<?xml version="1.0" encoding="UTF-8"?>
     <definitions id="Definitions_0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
@@ -1294,20 +1297,20 @@ Feature("Issues", () => {
     </definitions>`;
 
     let engine, listener;
-    Given("process with task with bound named error", async () => {
+    Given('process with task with bound named error', async () => {
       listener = new EventEmitter();
       engine = Engine({
-        name: "Engine",
+        name: 'Engine',
         source,
-        listener,
+        listener
       });
     });
 
     And(
-      "listener for task that will throw error under certain conditions",
+      'listener for task that will throw error under certain conditions',
       () => {
-        listener.on("activity.wait", (elementApi, execution) => {
-          if (elementApi.id !== "task-a") return;
+        listener.on('activity.wait', (elementApi, execution) => {
+          if (elementApi.id !== 'task-a') return;
           const { errorId } = execution.definitions[0].environment.variables;
           if (errorId) {
             return elementApi.owner.emitFatal(
@@ -1321,82 +1324,82 @@ Feature("Issues", () => {
     );
 
     let execution, end;
-    When("executed with condition to continue", async () => {
-      end = engine.waitFor("end");
+    When('executed with condition to continue', async () => {
+      end = engine.waitFor('end');
       execution = await engine.execute();
     });
 
-    Then("execution completed", () => {
+    Then('execution completed', () => {
       return end;
     });
 
-    And("task was taken", () => {
-      const task = execution.getActivityById("task-a");
+    And('task was taken', () => {
+      const task = execution.getActivityById('task-a');
       expect(task.counters).to.contain({
         taken: 1,
-        discarded: 0,
+        discarded: 0
       });
     });
 
-    And("bound error was discarded", () => {
-      const errorEvent = execution.getActivityById("bound-err");
+    And('bound error was discarded', () => {
+      const errorEvent = execution.getActivityById('bound-err');
       expect(errorEvent.counters).to.contain({
         taken: 0,
-        discarded: 1,
+        discarded: 1
       });
     });
 
-    When("executed with condition to throw specific error", async () => {
-      end = engine.waitFor("end");
+    When('executed with condition to throw specific error', async () => {
+      end = engine.waitFor('end');
       execution = await engine.execute({
         variables: {
-          errorId: "Error_1",
-        },
+          errorId: 'Error_1'
+        }
       });
     });
 
-    Then("execution completed", () => {
+    Then('execution completed', () => {
       return end;
     });
 
-    And("task was discarded", () => {
-      const task = execution.getActivityById("task-a");
+    And('task was discarded', () => {
+      const task = execution.getActivityById('task-a');
       expect(task.counters).to.contain({
         taken: 0,
-        discarded: 1,
+        discarded: 1
       });
     });
 
-    And("thrown error was caught", () => {
-      const errorEvent = execution.getActivityById("bound-err");
+    And('thrown error was caught', () => {
+      const errorEvent = execution.getActivityById('bound-err');
       expect(errorEvent.counters).to.contain({
         taken: 1,
-        discarded: 0,
+        discarded: 0
       });
     });
 
-    When("executed with condition to throw", async () => {
-      end = engine.waitFor("end");
-      execution = await engine.execute({ variables: { errorId: "Error_1" } });
+    When('executed with condition to throw', async () => {
+      end = engine.waitFor('end');
+      execution = await engine.execute({ variables: { errorId: 'Error_1' } });
     });
 
-    Then("execution completed", () => {
+    Then('execution completed', () => {
       return end;
     });
 
-    And("task was discarded", () => {
-      const task = execution.getActivityById("task-a");
+    And('task was discarded', () => {
+      const task = execution.getActivityById('task-a');
       expect(task.counters).to.contain({
         taken: 0,
-        discarded: 1,
+        discarded: 1
       });
     });
 
-    And("thrown error was caught", () => {
-      const errorEvent = execution.getActivityById("bound-err");
+    And('thrown error was caught', () => {
+      const errorEvent = execution.getActivityById('bound-err');
       expect(errorEvent.counters).to.contain({
         taken: 1,
-        discarded: 0,
+        discarded: 0
       });
     });
   });
@@ -1409,7 +1412,7 @@ function TimersWithoutScope(options) {
   options = {
     setTimeout,
     clearTimeout,
-    ...options,
+    ...options
   };
 
   const timersApi = {
@@ -1418,7 +1421,7 @@ function TimersWithoutScope(options) {
     },
     register,
     setTimeout: wrappedSetTimeout,
-    clearTimeout: wrappedClearTimeout,
+    clearTimeout: wrappedClearTimeout
   };
 
   return timersApi;
@@ -1426,7 +1429,7 @@ function TimersWithoutScope(options) {
   function register(owner) {
     return {
       setTimeout: registerTimeout(owner),
-      clearTimeout: timersApi.clearTimeout,
+      clearTimeout: timersApi.clearTimeout
     };
   }
 
@@ -1442,7 +1445,7 @@ function TimersWithoutScope(options) {
       callback,
       delay,
       args,
-      owner: this,
+      owner: this
     };
     executing.push(ref);
     ref.timerRef = options.setTimeout.call(null, onTimeout, delay, ...args);

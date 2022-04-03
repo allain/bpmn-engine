@@ -3,6 +3,7 @@
   "description": "BPMN 2.0 execution engine. Open source javascript workflow engine.",
   "version": "14.0.0",
   "main": "index.mjs",
+  "type": "module",
   "types": "types/bpmn-engine.d.ts",
   "repository": {
     "type": "git",
@@ -22,7 +23,7 @@
   ],
   "scripts": {
     "test": "mocha -R dot",
-    "posttest": "eslint . --cache && npm run toc",
+    "posttest": "eslint './**/*.mjs' --cache && npm run toc",
     "wintest": "node_modules/.bin/mocha",
     "test:lcov": "c8 mocha -R dot",
     "toc": "node scripts/generate-api-toc.mjs ./docs/API.md,./docs/Examples.md",
@@ -44,6 +45,8 @@
     }
   ],
   "devDependencies": {
+    "@babel/eslint-parser": "^7.17.0",
+    "@babel/preset-env": "^7.16.11",
     "bent": "^7.3.12",
     "c8": "^7.11.0",
     "camunda-bpmn-moddle": "^6.1.2",

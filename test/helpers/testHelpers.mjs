@@ -1,13 +1,11 @@
-"use strict";
-
-import BpmnModdle from "bpmn-moddle";
-import elements from "bpmn-elements";
-import Logger from "../../lib/Logger.mjs";
-import ModdleContextSerializer from "moddle-context-serializer";
+import BpmnModdle from 'bpmn-moddle';
+import elements from 'bpmn-elements';
+import Logger from '../../lib/Logger.mjs';
+import ModdleContextSerializer from 'moddle-context-serializer';
 const { default: serializer, TypeResolver } = ModdleContextSerializer;
 
 export async function context(source, options = {}) {
-  const logger = Logger("test-helpers:context");
+  const logger = Logger('test-helpers:context');
   const moddleCtx = await moddleContext(source, options);
 
   if (moddleCtx.warnings) {
@@ -19,7 +17,7 @@ export async function context(source, options = {}) {
 
   const types = TypeResolver({
     ...elements,
-    ...options.elements,
+    ...options.elements
   });
 
   return serializer(moddleCtx, types, options.extendFn);
@@ -37,7 +35,7 @@ export function serializeModdleContext({
   rootHandler,
   elementsById,
   references,
-  warnings,
+  warnings
 }) {
   const serializedRoot = JSON.parse(
     JSON.stringify(rootElement || rootHandler.element)
@@ -47,7 +45,7 @@ export function serializeModdleContext({
     rootElement: serializedRoot,
     elementsById: JSON.parse(JSON.stringify(elementsById)),
     references: JSON.parse(JSON.stringify(references)),
-    warnings: warnings.slice(),
+    warnings: warnings.slice()
   };
   return clonedContext;
 }

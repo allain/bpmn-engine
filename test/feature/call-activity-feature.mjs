@@ -1,32 +1,32 @@
-import * as factory from "../helpers/factory.mjs";
-import { Engine } from "../../index.mjs";
+import * as factory from '../helpers/factory.mjs';
+import { Engine } from '../../index.mjs';
 
-Feature("Call activity", () => {
-  Scenario("call process in the same diagram", () => {
+Feature('Call activity', () => {
+  Scenario('call process in the same diagram', () => {
     let engine;
-    Given("a process with a call activity referencing a process", async () => {
-      const source = factory.resource("call-activity.bpmn");
+    Given('a process with a call activity referencing a process', async () => {
+      const source = factory.resource('call-activity.bpmn');
       engine = new Engine({
-        name: "Call activity feature",
-        source,
+        name: 'Call activity feature',
+        source
       });
     });
 
     let end;
-    When("ran", () => {
-      end = engine.waitFor("end");
+    When('ran', () => {
+      end = engine.waitFor('end');
       engine.execute();
     });
 
-    Then("run completes", () => {
+    Then('run completes', () => {
       return end;
     });
   });
 
-  Scenario("called process throws", () => {
+  Scenario('called process throws', () => {
     let engine;
     Given(
-      "a process with a call activity referencing a process that throws",
+      'a process with a call activity referencing a process that throws',
       async () => {
         const source = `
       <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -43,29 +43,29 @@ Feature("Call activity", () => {
       </definitions>`;
 
         engine = new Engine({
-          name: "Call activity feature",
+          name: 'Call activity feature',
           source,
           services: {
             serviceFn(...args) {
-              args.pop()(new Error("No cigarr"));
-            },
-          },
+              args.pop()(new Error('No cigarr'));
+            }
+          }
         });
       }
     );
 
     let endInError;
-    When("ran", () => {
-      endInError = engine.waitFor("error");
+    When('ran', () => {
+      endInError = engine.waitFor('error');
       engine.execute();
     });
 
-    Then("run fails", () => {
+    Then('run fails', () => {
       return endInError;
     });
 
     Given(
-      "a process with a call activity with bound error handling referencing a process that throws",
+      'a process with a call activity with bound error handling referencing a process that throws',
       async () => {
         const source = `
       <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -87,33 +87,33 @@ Feature("Call activity", () => {
       </definitions>`;
 
         engine = new Engine({
-          name: "Call activity feature",
+          name: 'Call activity feature',
           source,
           services: {
             serviceFn(...args) {
-              args.pop()(new Error("No cigarr"));
-            },
-          },
+              args.pop()(new Error('No cigarr'));
+            }
+          }
         });
       }
     );
 
     let end;
-    When("ran", () => {
-      end = engine.waitFor("end");
+    When('ran', () => {
+      end = engine.waitFor('end');
       engine.execute();
     });
 
-    Then("run completes", () => {
+    Then('run completes', () => {
       return end;
     });
 
-    And("error was caught by boundaryEvent", () => {});
+    And('error was caught by boundaryEvent', () => {});
   });
 
-  Scenario("call activity is canceled", () => {
+  Scenario('call activity is canceled', () => {
     let engine;
-    Given("a process with a call activity referencing a process", async () => {
+    Given('a process with a call activity referencing a process', async () => {
       const source = `
       <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="main-process" isExecutable="true">
@@ -129,56 +129,56 @@ Feature("Call activity", () => {
       </definitions>`;
 
       engine = new Engine({
-        name: "Call activity feature",
-        source,
+        name: 'Call activity feature',
+        source
       });
     });
 
     let end;
-    When("ran", () => {
-      end = engine.waitFor("end");
+    When('ran', () => {
+      end = engine.waitFor('end');
       engine.execute();
     });
 
-    Then("call activity has started process", () => {
+    Then('call activity has started process', () => {
       expect(
         engine.execution.definitions[0].getRunningProcesses()
       ).to.have.length(2);
     });
 
-    When("call activity is cancelled", () => {
+    When('call activity is cancelled', () => {
       const [callActivity] = engine.execution.getPostponed();
       callActivity.cancel();
     });
 
-    Then("run completes", () => {
+    Then('run completes', () => {
       return end;
     });
 
-    When("ran again", () => {
-      end = engine.waitFor("end");
+    When('ran again', () => {
+      end = engine.waitFor('end');
       engine.execute();
     });
 
-    Then("call activity has started process", () => {
+    Then('call activity has started process', () => {
       expect(
         engine.execution.definitions[0].getRunningProcesses()
       ).to.have.length(2);
     });
 
-    When("called process is discarded", () => {
+    When('called process is discarded', () => {
       engine.execution.definitions[0]
         .getRunningProcesses()[1]
         .getApi()
         .discard();
     });
 
-    Then("run completes", () => {
+    Then('run completes', () => {
       return end;
     });
 
     Given(
-      "a process with a call activity not referencing any process",
+      'a process with a call activity not referencing any process',
       async () => {
         const source = `
       <definitions id="Def_2" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -192,31 +192,31 @@ Feature("Call activity", () => {
       </definitions>`;
 
         engine = new Engine({
-          name: "Call activity feature",
-          source,
+          name: 'Call activity feature',
+          source
         });
       }
     );
 
-    When("ran", () => {
-      end = engine.waitFor("end");
+    When('ran', () => {
+      end = engine.waitFor('end');
       engine.execute();
     });
 
-    And("call activity is cancelled", () => {
+    And('call activity is cancelled', () => {
       const callActivity = engine.execution.getPostponed()[0];
-      expect(callActivity.id).to.equal("no-call-activity");
+      expect(callActivity.id).to.equal('no-call-activity');
       callActivity.cancel();
     });
 
-    Then("run completes", () => {
+    Then('run completes', () => {
       return end;
     });
   });
 
-  Scenario("call activity is discarded mid run", () => {
+  Scenario('call activity is discarded mid run', () => {
     let engine;
-    Given("a process with a call activity referencing a process", async () => {
+    Given('a process with a call activity referencing a process', async () => {
       const source = `
       <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="main-process" isExecutable="true">
@@ -232,39 +232,39 @@ Feature("Call activity", () => {
       </definitions>`;
 
       engine = new Engine({
-        name: "Call activity feature",
-        source,
+        name: 'Call activity feature',
+        source
       });
     });
 
     let end;
-    When("ran", () => {
-      end = engine.waitFor("end");
+    When('ran', () => {
+      end = engine.waitFor('end');
       engine.execute();
     });
 
-    Then("call activity has started process", () => {
+    Then('call activity has started process', () => {
       expect(
         engine.execution.definitions[0].getRunningProcesses()
       ).to.have.length(2);
     });
 
-    When("call activity is discarded", () => {
+    When('call activity is discarded', () => {
       const callActivity = engine.execution.getPostponed()[0];
       callActivity.discard();
     });
 
-    Then("run completes", () => {
+    Then('run completes', () => {
       return end;
     });
   });
 
   Scenario(
-    "a process with a parallel multi-instance call activity with cardinality of three",
+    'a process with a parallel multi-instance call activity with cardinality of three',
     () => {
       let engine;
       const serviceCalls = [];
-      Given("two processes", async () => {
+      Given('two processes', async () => {
         const source = `
       <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="main-process" isExecutable="true">
@@ -284,40 +284,40 @@ Feature("Call activity", () => {
       </definitions>`;
 
         engine = new Engine({
-          name: "Call activity feature",
+          name: 'Call activity feature',
           source,
           services: {
             serviceFn(...args) {
               serviceCalls.push(args);
-            },
-          },
+            }
+          }
         });
       });
 
       let end;
-      When("ran", () => {
-        end = engine.waitFor("end");
+      When('ran', () => {
+        end = engine.waitFor('end');
         engine.execute();
       });
 
-      Then("multi-instance is waiting to complete", () => {
+      Then('multi-instance is waiting to complete', () => {
         expect(serviceCalls).to.have.length(3);
       });
 
-      And("executable process is running", () => {
+      And('executable process is running', () => {
         expect(
           engine.execution.definitions[0]
             .getProcesses()
-            .filter(({ id }) => id === "main-process")
+            .filter(({ id }) => id === 'main-process')
         ).to.have.length(1);
       });
 
       And(
-        "three instances of called process are running with unique execution ids",
+        'three instances of called process are running with unique execution ids',
         () => {
           const called = engine.execution.definitions[0]
             .getProcesses()
-            .filter(({ id }) => id === "called-process");
+            .filter(({ id }) => id === 'called-process');
           expect(called).to.have.length(3);
 
           called
@@ -325,78 +325,78 @@ Feature("Call activity", () => {
             .forEach((bpExecId) => {
               expect(
                 called.filter(({ executionId }) => executionId === bpExecId),
-                bpExecId + " reused"
+                bpExecId + ' reused'
               ).to.have.length(1);
             });
         }
       );
 
-      When("multi-instance completes", () => {
+      When('multi-instance completes', () => {
         serviceCalls.forEach((args, idx) => args.pop()(null, idx + 1));
       });
 
-      Then("run completes", () => {
+      Then('run completes', () => {
         return end;
       });
 
-      When("ran again", () => {
+      When('ran again', () => {
         serviceCalls.splice(0);
         engine.execute();
       });
 
-      Then("multi-instance is waiting to complete", () => {
+      Then('multi-instance is waiting to complete', () => {
         expect(serviceCalls).to.have.length(3);
       });
 
       let state;
-      Given("stopped", async () => {
+      Given('stopped', async () => {
         engine.stop();
         state = await engine.getState();
         serviceCalls.splice(0);
       });
 
-      When("resumed", () => {
-        end = engine.waitFor("end");
+      When('resumed', () => {
+        end = engine.waitFor('end');
         engine.resume();
       });
 
-      Then("multi-instance is waiting to complete", () => {
+      Then('multi-instance is waiting to complete', () => {
         expect(serviceCalls).to.have.length(3);
       });
 
-      When("multi-instance completes", () => {
+      When('multi-instance completes', () => {
         serviceCalls.forEach((args, idx) => args.pop()(null, idx + 10));
       });
 
-      Then("run completes", () => {
+      Then('run completes', () => {
         return end;
       });
 
-      Given("recovered from stopped", () => {
+      Given('recovered from stopped', () => {
         engine = new Engine({
           services: {
             serviceFn(...args) {
               serviceCalls.push(args);
-            },
-          },
+            }
+          }
         }).recover(state);
       });
 
-      When("resumed", () => {
+      When('resumed', () => {
         serviceCalls.splice(0);
-        end = engine.waitFor("end");
+        end = engine.waitFor('end');
         engine.resume();
       });
 
-      Then("multi-instance is waiting to complete", () => {
+      Then('multi-instance is waiting to complete', () => {
         expect(serviceCalls).to.have.length(3);
       });
 
-      When("multi-instance completes", () => {
+      When('multi-instance completes', () => {
         serviceCalls.forEach((args, idx) => args.pop()(null, idx + 20));
       });
 
-      Then("run completes", () => {
+      Then('run completes', () => {
         return end;
       });
     }

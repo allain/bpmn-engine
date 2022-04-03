@@ -1,5 +1,4 @@
-Examples
-========
+# Examples
 
 <!-- toc -->
 
@@ -22,7 +21,7 @@ Examples
 # Execute
 
 ```javascript
-const {Engine} = require('bpmn-engine');
+const { Engine } = require('bpmn-engine');
 
 const id = Math.floor(Math.random() * 10000);
 
@@ -51,17 +50,18 @@ const engine = new Engine({
 });
 
 engine.execute((err, execution) => {
-  console.log('Execution completed with id', execution.environment.variables.id);
+  console.log(
+    'Execution completed with id',
+    execution.environment.variables.id
+  );
 });
 ```
 
 # Listen for events
 
 ```javascript
-'use strict';
-
-const {Engine} = require('bpmn-engine');
-const {EventEmitter} = require('events');
+const { Engine } = require('bpmn-engine');
+const { EventEmitter } = require('events');
 
 const source = `
 <?xml version="1.0" encoding="UTF-8"?>
@@ -92,10 +92,12 @@ const listener = new EventEmitter();
 listener.once('wait', (task) => {
   task.signal({
     ioSpecification: {
-      dataOutputs: [{
-        id: 'userInput',
-        value: 'von Rosen',
-      }]
+      dataOutputs: [
+        {
+          id: 'userInput',
+          value: 'von Rosen'
+        }
+      ]
     }
   });
 });
@@ -106,14 +108,19 @@ listener.on('flow.take', (flow) => {
 
 engine.once('end', (execution) => {
   console.log(execution.environment.variables);
-  console.log(`User sirname is ${execution.environment.output.data.inputFromUser}`);
+  console.log(
+    `User sirname is ${execution.environment.output.data.inputFromUser}`
+  );
 });
 
-engine.execute({
-  listener
-}, (err) => {
-  if (err) throw err;
-});
+engine.execute(
+  {
+    listener
+  },
+  (err) => {
+    if (err) throw err;
+  }
+);
 ```
 
 # Exclusive gateway
@@ -121,10 +128,8 @@ engine.execute({
 An exclusive gateway will receive the available process variables as `this.environment.variables`.
 
 ```javascript
-'use strict';
-
-const {Engine} = require('bpmn-engine');
-const {EventEmitter} = require('events');
+const { Engine } = require('bpmn-engine');
+const { EventEmitter } = require('events');
 
 const source = `
 <?xml version="1.0" encoding="UTF-8"?>
@@ -156,7 +161,10 @@ const engine = new Engine({
 const listener = new EventEmitter();
 
 listener.on('activity.start', (api) => {
-  if (api.id === 'end1') throw new Error(`<${api.id}> was not supposed to be taken, check your input`);
+  if (api.id === 'end1')
+    throw new Error(
+      `<${api.id}> was not supposed to be taken, check your input`
+    );
   if (api.id === 'end2') console.log(`<${api.id}> correct decision was taken`);
 });
 
@@ -177,13 +185,12 @@ engine.on('end', () => {
 A script task will receive the data available on the process instance. So if `bent` or another module is needed it has to be passed when starting the process. The script task also has a callback called `next` that has to be called for the task to complete.
 
 The `next` callback takes the following arguments:
+
 - `err`: occasional error
 - `result`: optional result of the script
 
 ```javascript
-'use strict';
-
-const {Engine} = require('bpmn-engine');
+const { Engine } = require('bpmn-engine');
 const bent = require('bent');
 
 const source = `
@@ -226,7 +233,7 @@ engine.execute({
   },
   services: {
     get: bent('json'),
-    set,
+    set
   }
 });
 engine.on('end', (execution) => {
@@ -243,10 +250,8 @@ function set(activity, name, value) {
 User tasks waits for signal to complete.
 
 ```javascript
-'use strict';
-
-const {Engine} = require('bpmn-engine');
-const {EventEmitter} = require('events');
+const { Engine } = require('bpmn-engine');
+const { EventEmitter } = require('events');
 
 const source = `
 <?xml version="1.0" encoding="UTF-8"?>
@@ -274,15 +279,19 @@ listener.once('wait', (elementApi) => {
 });
 
 listener.on('activity.end', (elementApi, engineApi) => {
-  if (elementApi.content.output) engineApi.environment.output[elementApi.id] = elementApi.content.output;
+  if (elementApi.content.output)
+    engineApi.environment.output[elementApi.id] = elementApi.content.output;
 });
 
-engine.execute({
-  listener
-}, (err, execution) => {
-  if (err) throw err;
-  console.log(`User sirname is ${execution.environment.output.task.sirname}`);
-});
+engine.execute(
+  {
+    listener
+  },
+  (err, execution) => {
+    if (err) throw err;
+    console.log(`User sirname is ${execution.environment.output.task.sirname}`);
+  }
+);
 ```
 
 # Service task
@@ -295,9 +304,7 @@ A service task will receive the data available on the process instance. The sign
   - `result`: service call result
 
 ```javascript
-'use strict';
-
-const {Engine} = require('bpmn-engine');
+const { Engine } = require('bpmn-engine');
 
 const getJson = require('bent')('json');
 
@@ -333,33 +340,38 @@ const engine = new Engine({
     saveToResultVariable(activity) {
       if (!activity.behaviour.resultVariable) return;
 
-      activity.on('end', ({environment, content}) => {
-        environment.output[activity.behaviour.resultVariable] = content.output[0];
+      activity.on('end', ({ environment, content }) => {
+        environment.output[activity.behaviour.resultVariable] =
+          content.output[0];
       });
+    }
+  }
+});
+
+engine.execute(
+  {
+    variables: {
+      apiPath: 'https://example.com/test'
     },
-  }
-});
-
-engine.execute({
-  variables: {
-    apiPath: 'https://example.com/test'
+    services: {
+      getRequest
+    }
   },
-  services: {
-    getRequest,
-  }
-}, (err, execution) => {
-  if (err) throw err;
+  (err, execution) => {
+    if (err) throw err;
 
-  console.log('Service task output:', execution.environment.output.serviceResult);
-});
+    console.log(
+      'Service task output:',
+      execution.environment.output.serviceResult
+    );
+  }
+);
 ```
 
 or as a expression function call:
 
 ```javascript
-'use strict';
-
-const {Engine} = require('bpmn-engine');
+const { Engine } = require('bpmn-engine');
 
 const source = `
 <?xml version="1.0" encoding="UTF-8"?>
@@ -387,7 +399,7 @@ engine.execute({
     input: 1
   },
   extensions: {
-    saveToEnvironmentOutput(activity, {environment}) {
+    saveToEnvironmentOutput(activity, { environment }) {
       activity.on('end', (api) => {
         environment.output[api.id] = api.content.output;
       });
@@ -403,8 +415,8 @@ engine.once('end', (execution) => {
 # Sequence flow with condition expression
 
 ```javascript
-const {Engine} = require('bpmn-engine');
-const {EventEmitter} = require('events');
+const { Engine } = require('bpmn-engine');
+const { EventEmitter } = require('events');
 
 const source = `
 <?xml version="1.0" encoding="UTF-8"?>
@@ -430,7 +442,8 @@ const engine = new Engine({
 
 const listener = new EventEmitter();
 listener.on('activity.end', (elementApi) => {
-  if (elementApi.id === 'end2') throw new Error(`<${elementApi.id}> should not have been taken`);
+  if (elementApi.id === 'end2')
+    throw new Error(`<${elementApi.id}> should not have been taken`);
 });
 
 engine.execute({
@@ -453,8 +466,8 @@ engine.once('end', () => {
 # Task loop over collection
 
 ```javascript
-const {Engine} = require('bpmn-engine');
-const JsExtension = require('../test/resources/JsExtension');
+import { Engine } from 'bpmn-engine';
+import JsExtension from '../test/resources/JsExtension.mjs';
 
 const source = `
 <?xml version="1.0" encoding="UTF-8"?>
@@ -479,7 +492,7 @@ const engine = new Engine({
   },
   extensions: {
     js: JsExtension.extension
-  },
+  }
 });
 
 let sum = 0;
@@ -506,8 +519,8 @@ engine.once('end', () => {
 Pass an extend function with options.
 
 ```javascript
-const {Engine} = require('bpmn-engine');
-const {EventEmitter} = require('events');
+const { Engine } = require('bpmn-engine');
+const { EventEmitter } = require('events');
 
 const source = `
 <?xml version="1.0" encoding="UTF-8"?>
@@ -542,7 +555,7 @@ const engine = new Engine({
   name: 'Pending game',
   source,
   moddleOptions: {
-    camunda: require('camunda-bpmn-moddle/resources/camunda.json'),
+    camunda: require('camunda-bpmn-moddle/resources/camunda.json')
   },
   extensions: {
     camunda: camundaExt
@@ -554,11 +567,13 @@ const listener = new EventEmitter();
 listener.on('wait', (elementApi) => {
   if (elementApi.content.form) {
     console.log(elementApi.content.form);
-    return elementApi.signal(elementApi.content.form.fields.reduce((result, field) => {
-      if (field.label === 'Surname') result[field.id] = 'von Rosen';
-      if (field.label === 'Given name') result[field.id] = 'Sebastian';
-      return result;
-    }, {}));
+    return elementApi.signal(
+      elementApi.content.form.fields.reduce((result, field) => {
+        if (field.label === 'Surname') result[field.id] = 'von Rosen';
+        if (field.label === 'Given name') result[field.id] = 'Sebastian';
+        return result;
+      }, {})
+    );
   }
 
   elementApi.signal();
@@ -574,13 +589,13 @@ function camundaExt(activity) {
   for (const extn of activity.behaviour.extensionElements.values) {
     if (extn.$type === 'camunda:FormData') {
       form = {
-        fields: extn.fields.map((f) => ({...f}))
+        fields: extn.fields.map((f) => ({ ...f }))
       };
     }
   }
 
   activity.on('enter', () => {
-    activity.broker.publish('format', 'run.form', {form});
+    activity.broker.publish('format', 'run.form', { form });
   });
 }
 ```
@@ -590,7 +605,7 @@ function camundaExt(activity) {
 Add your own extension function that act on service task attributes.
 
 ```javascript
-const {Engine} = require('bpmn-engine');
+const { Engine } = require('bpmn-engine');
 
 const source = `
 <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
@@ -602,16 +617,19 @@ const source = `
 </definitions>`;
 
 function ServiceExpression(activity) {
-  const {type: atype, behaviour, environment} = activity;
+  const { type: atype, behaviour, environment } = activity;
   const expression = behaviour.expression;
   const type = `${atype}:expression`;
   return {
     type,
     expression,
-    execute,
+    execute
   };
   function execute(executionMessage, callback) {
-    const serviceFn = environment.resolveExpression(expression, executionMessage);
+    const serviceFn = environment.resolveExpression(
+      expression,
+      executionMessage
+    );
     serviceFn.call(activity, executionMessage, (err, result) => {
       callback(err, result);
     });
@@ -622,11 +640,11 @@ const engine = new Engine({
   name: 'extend service task',
   source,
   moddleOptions: {
-    camunda: require('camunda-bpmn-moddle/resources/camunda.json'),
+    camunda: require('camunda-bpmn-moddle/resources/camunda.json')
   },
   services: {
     serviceFn(scope, callback) {
-      callback(null, {data: 1});
+      callback(null, { data: 1 });
     }
   },
   extensions: {
@@ -636,10 +654,11 @@ const engine = new Engine({
       }
       if (activity.behaviour.resultVariable) {
         activity.on('end', (api) => {
-          activity.environment.output[activity.behaviour.resultVariable] = api.content.output;
+          activity.environment.output[activity.behaviour.resultVariable] =
+            api.content.output;
         });
       }
-    },
+    }
   }
 });
 
@@ -654,8 +673,8 @@ engine.execute((err, instance) => {
 Publish event when human involvement is required.
 
 ```javascript
-const {Engine} = require('bpmn-engine');
-const {EventEmitter} = require('events');
+const { Engine } = require('bpmn-engine');
+const { EventEmitter } = require('events');
 
 const source = `
 <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
@@ -682,20 +701,25 @@ const source = `
 </definitions>`;
 
 function humanInvolvement(activity) {
-  if (!activity.behaviour.resources || !activity.behaviour.resources.length) return;
+  if (!activity.behaviour.resources || !activity.behaviour.resources.length)
+    return;
 
-  const humanPerformer = activity.behaviour.resources.find((resource) => resource.type === 'bpmn:HumanPerformer');
-  const potentialOwner = activity.behaviour.resources.find((resource) => resource.type === 'bpmn:PotentialOwner');
+  const humanPerformer = activity.behaviour.resources.find(
+    (resource) => resource.type === 'bpmn:HumanPerformer'
+  );
+  const potentialOwner = activity.behaviour.resources.find(
+    (resource) => resource.type === 'bpmn:PotentialOwner'
+  );
 
   activity.on('enter', (api) => {
     activity.broker.publish('format', 'run.call.humans', {
       humanPerformer: api.resolveExpression(humanPerformer.expression),
-      potentialOwner: api.resolveExpression(potentialOwner.expression),
+      potentialOwner: api.resolveExpression(potentialOwner.expression)
     });
   });
 
   activity.on('wait', (api) => {
-    api.owner.broker.publish('event', 'activity.call', {...api.content});
+    api.owner.broker.publish('event', 'activity.call', { ...api.content });
   });
 }
 
@@ -705,7 +729,7 @@ const engine = new Engine({
   name: 'call humans',
   source,
   moddleOptions: {
-    camunda: require('camunda-bpmn-moddle/resources/camunda.json'),
+    camunda: require('camunda-bpmn-moddle/resources/camunda.json')
   },
   services: {
     getUser() {
@@ -723,7 +747,7 @@ listener.on('activity.call', (api) => {
   api.signal();
 });
 
-engine.execute({listener}, (err, instance) => {
+engine.execute({ listener }, (err, instance) => {
   if (err) throw err;
   console.log(instance.name, 'completed');
 });
@@ -734,10 +758,13 @@ engine.execute({listener}, (err, instance) => {
 Shake down the possible sequences an activity can have.
 
 ```javascript
-const {Engine} = require('bpmn-engine');
+const { Engine } = require('bpmn-engine');
 const BpmnModdle = require('bpmn-moddle');
 const elements = require('bpmn-elements');
-const {default: Serializer, TypeResolver} = require('moddle-context-serializer');
+const {
+  default: Serializer,
+  TypeResolver
+} = require('moddle-context-serializer');
 
 const source = `
 <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
@@ -764,22 +791,28 @@ const source = `
 </definitions>`;
 
 (async function IIFE() {
-  const moddleContext = await (new BpmnModdle({
-    camunda: require('camunda-bpmn-moddle/resources/camunda.json'),
-  })).fromXML(source);
+  const moddleContext = await new BpmnModdle({
+    camunda: require('camunda-bpmn-moddle/resources/camunda.json')
+  }).fromXML(source);
 
   const sourceContext = Serializer(moddleContext, TypeResolver(elements));
 
   const engine = new Engine({
-    sourceContext,
+    sourceContext
   });
 
   const [definition] = await engine.getDefinitions();
 
   const shakenStarts = definition.shake();
 
-  console.log('first sequence', shakenStarts.start[0].sequence.reduce(printSequence, ''));
-  console.log('second sequence', shakenStarts.start[1].sequence.reduce(printSequence, ''));
+  console.log(
+    'first sequence',
+    shakenStarts.start[0].sequence.reduce(printSequence, '')
+  );
+  console.log(
+    'second sequence',
+    shakenStarts.start[1].sequence.reduce(printSequence, '')
+  );
 
   function printSequence(res, s) {
     if (!res) return s.id;
@@ -797,31 +830,31 @@ In this example the state of the execution is published on a message broker. Sub
 
 ```js
 const camundaModdle = require('camunda-bpmn-moddle/resources/camunda');
-const {Engine: BpmnEngine} = require('bpmn-engine');
-const {EventEmitter} = require('events');
-const {getSourceSync, getAllowedServices, getExtensions} = require('./utils');
-const {publish} = require('./dbbroker');
-const {v4: uuid} = require('uuid');
+const { Engine: BpmnEngine } = require('bpmn-engine');
+const { EventEmitter } = require('events');
+const { getSourceSync, getAllowedServices, getExtensions } = require('./utils');
+const { publish } = require('./dbbroker');
+const { v4: uuid } = require('uuid');
 
 function ignite(executionId, options = {}) {
-  const {name, settings} = options;
+  const { name, settings } = options;
   const listener = new EventEmitter();
   listener.on('activity.wait', (_, execution) => {
-    return publishEvent('bpmn.state.update', {state: execution.getState()});
+    return publishEvent('bpmn.state.update', { state: execution.getState() });
   });
   listener.on('activity.end', (_, execution) => {
-    return publishEvent('bpmn.state.update', {state: execution.getState()});
+    return publishEvent('bpmn.state.update', { state: execution.getState() });
   });
   listener.on('activity.timer', (api, execution) => {
     return publishEvent('bpmn.state.expires', {
       expires: new Date(api.content.startedAt + api.content.timeout),
-      state: execution.getState(),
+      state: execution.getState()
     });
   });
   listener.on('activity.timeout', (_, execution) => {
     return publishEvent('bpmn.state.expired', {
       expired: new Date(),
-      state: execution.getState(),
+      state: execution.getState()
     });
   });
 
@@ -833,32 +866,32 @@ function ignite(executionId, options = {}) {
     settings: {
       ...settings,
       executionId,
-      enableDummyService: false,
+      enableDummyService: false
     }
   });
   engine.once('end', () => {
     publishEvent('bpmn.completed');
   });
   engine.once('error', (err) => {
-    publishEvent('bpmn.error', {message: err.message, error: err});
+    publishEvent('bpmn.error', { message: err.message, error: err });
   });
 
-  return {engine, listener};
+  return { engine, listener };
 
   function publishEvent(routingKey, message) {
     publish('events', routingKey, {
       name,
       executionId,
-      ...message,
+      ...message
     });
   }
 }
 
-const {engine} = ignite(uuid(), {
+const { engine } = ignite(uuid(), {
   name: 'persisted engine #1',
   source: getSourceSync('./mother-of-all.bpmn'),
   services: getAllowedServices(),
-  extensions: getExtensions(),
+  extensions: getExtensions()
 });
 
 engine.execute();

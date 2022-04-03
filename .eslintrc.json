@@ -1,7 +1,9 @@
 {
-  "parser": "espree",
+  "parser": "@babel/eslint-parser",
   "parserOptions": {
+    "sourceType": "module",
     "ecmaVersion": 2018,
+    "requireConfigFile": false,
     "ecmaFeatures": {
       "experimentalObjectRestSpread": true
     }
@@ -12,26 +14,40 @@
   },
   "extends": "eslint:recommended",
   "rules": {
-    "brace-style": [2, "1tbs", {
-      "allowSingleLine": false
-    }],
+    "brace-style": [
+      2,
+      "1tbs",
+      {
+        "allowSingleLine": false
+      }
+    ],
     "camelcase": 0,
     "comma-spacing": 2,
     "consistent-return": 0,
     "curly": [2, "multi-line"],
-    "dot-notation": [2, {
-      "allowKeywords": true
-    }],
+    "dot-notation": [
+      2,
+      {
+        "allowKeywords": true
+      }
+    ],
     "eol-last": 2,
     "eqeqeq": 2,
     "handle-callback-err": 2,
-    "indent": [2, 2, {
-      "SwitchCase": 1
-    }],
-    "key-spacing": [2, {
-      "beforeColon": false,
-      "afterColon": true
-    }],
+    "indent": [
+      2,
+      2,
+      {
+        "SwitchCase": 1
+      }
+    ],
+    "key-spacing": [
+      2,
+      {
+        "beforeColon": false,
+        "afterColon": true
+      }
+    ],
     "keyword-spacing": 2,
     "new-cap": 0,
     "new-parens": 2,
@@ -76,24 +92,33 @@
     "no-var": 2,
     "no-with": 2,
     "prefer-arrow-callback": 2,
-    "prefer-const": ["error", {"destructuring": "all"}],
+    "prefer-const": ["error", { "destructuring": "all" }],
     "quotes": [2, "single"],
     "require-atomic-updates": 0,
     "semi": [2, "always"],
-    "semi-spacing": [2, {
-      "before": false,
-      "after": true
-    }],
+    "semi-spacing": [
+      2,
+      {
+        "before": false,
+        "after": true
+      }
+    ],
     "space-infix-ops": 2,
-    "space-unary-ops": [2, {
-      "words": true,
-      "nonwords": false
-    }],
+    "space-unary-ops": [
+      2,
+      {
+        "words": true,
+        "nonwords": false
+      }
+    ],
     "space-before-blocks": 2,
-    "space-before-function-paren": [2, {
-      "anonymous": "never",
-      "named": "never"
-    }],
+    "space-before-function-paren": [
+      2,
+      {
+        "anonymous": "never",
+        "named": "never"
+      }
+    ],
     "strict": [2, "global"],
     "yoda": [2, "never"]
   }

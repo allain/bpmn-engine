@@ -1,9 +1,8 @@
 // Author : Saeed Tabrizi
 
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
 
 declare module 'bpmn-engine' {
-
   /**
    * Engine emits the following events:
 
@@ -26,7 +25,7 @@ declare module 'bpmn-engine' {
       activity.error: An non-recoverable error has occurred
    */
   export type BpmnActivityEvent =
-    'activity.enter'
+    | 'activity.enter'
     | 'activity.start'
     | 'activity.wait'
     | 'wait'
@@ -41,7 +40,10 @@ declare module 'bpmn-engine' {
         flow.discard: The sequence flow was discarded
         flow.looped: The sequence is looped
    */
-  export type BpmnSequenceFlowEvent = 'flow.take' | 'flow.discard' | 'flow.looped';
+  export type BpmnSequenceFlowEvent =
+    | 'flow.take'
+    | 'flow.discard'
+    | 'flow.looped';
   export type BpmnEngineVariable = Record<string, any>;
 
   export interface BpmnLogger {
@@ -51,9 +53,9 @@ declare module 'bpmn-engine' {
   }
 
   export interface BpmnMessage {
-    id?: string,
-    executionId?: string,
-    [name: string]: any
+    id?: string;
+    executionId?: string;
+    [name: string]: any;
   }
 
   export interface BpmnEngineBrokerExchange {
@@ -90,7 +92,11 @@ declare module 'bpmn-engine' {
     messageTtl: number;
     ack(message: any): void;
     ackAll(): void;
-    assertConsumer(onMessage: () => void, consumeOptions?: any, owner?: any): void;
+    assertConsumer(
+      onMessage: () => void,
+      consumeOptions?: any,
+      owner?: any
+    ): void;
     cancel(consumerTag: string): void;
     close(): void;
     consume(onMessage: () => void, consumeOptions?: any, owner?: any): void;
@@ -108,7 +114,12 @@ declare module 'bpmn-engine' {
     peek(ignoreDelivered?: boolean): void;
     purge(): void;
 
-    queueMessage(fields: any[], content?: any, properties?: any, onMessageQueued?: () => void): void;
+    queueMessage(
+      fields: any[],
+      content?: any,
+      properties?: any,
+      onMessageQueued?: () => void
+    ): void;
     recover<S>(state: S): void;
     reject(message: any, requeue?: boolean): void;
     stop(): void;
@@ -128,9 +139,19 @@ declare module 'bpmn-engine' {
   }
 
   export interface BpmnEngineBrokerMessage {
-    fields: {routingKey: string, redelivered: boolean, exchange: any, consumerTag: string}[];
+    fields: {
+      routingKey: string;
+      redelivered: boolean;
+      exchange: any;
+      consumerTag: string;
+    }[];
     content: any;
-    properties: {messageId: string, persistent: boolean, timestamp: Date, expiration: number};
+    properties: {
+      messageId: string;
+      persistent: boolean;
+      timestamp: Date;
+      expiration: number;
+    };
     ack(allUpTo?: boolean): void;
     nack(allUpTo?: boolean, requeue?: boolean): void;
     reject(requeue?: boolean): void;
@@ -138,21 +159,34 @@ declare module 'bpmn-engine' {
   }
 
   export interface BpmnEngineBroker<W> {
-    new(owner: W): BpmnEngineBroker<W>;
+    new (owner: W): BpmnEngineBroker<W>;
     readonly owner: W;
     assertExchange(exchangeName: string, type: string, options?: any): void;
     deleteExchange(exchangeName: string, ifUnused?: boolean): void;
-    bindExchange(source: string, destination: string, pattern: string, ...args: any[]): void;
+    bindExchange(
+      source: string,
+      destination: string,
+      pattern: string,
+      ...args: any[]
+    ): void;
 
     unbindExchange(source: string, destination: string, pattern?: string): void;
     assertQueue(queueName: string, options?: any): void;
-    bindQueue(queueName: string, exchangeName: string, pattern: string, options?: any): void;
+    bindQueue(
+      queueName: string,
+      exchangeName: string,
+      pattern: string,
+      options?: any
+    ): void;
     unbindQueue(queueName: string, exchangeName: string, pattern: string): void;
 
     consume(queueName: string, onMessage: () => void, options?: any): void;
     cancel(consumerTag: string): void;
     createQueue<Q>(): Q;
-    deleteQueue(queueName: string, options?: {ifUnused: boolean, ifEmpty?: boolean}): void;
+    deleteQueue(
+      queueName: string,
+      options?: { ifUnused: boolean; ifEmpty?: boolean }
+    ): void;
 
     getExchange<T>(exchangeName: string): T;
     getQueue<Q>(queueName: string): Q;
@@ -171,7 +205,12 @@ declare module 'bpmn-engine' {
     nackAll(requeue?: boolean): void;
     reject(message: any, requeue?: boolean): void;
 
-    createShovel<S>(name: string, source: string, destination: string, options?: any): S;
+    createShovel<S>(
+      name: string,
+      source: string,
+      destination: string,
+      options?: any
+    ): S;
     getShovel<S>(name: string): S;
     closeShovel(name: string): void;
     prefetch(count: number): void;
@@ -181,12 +220,34 @@ declare module 'bpmn-engine' {
     off(eventName: string, handler: () => void): void;
     unsubscribe(queueName: string, onMessage: () => void): void;
     cancel(eventName: string): void;
-    subscribe(exchangeName: string, pattern: string, queueName: string, onMessage: () => void, options?: any): void;
-    subscribeTmp(exchangeName: string, pattern: string, queueName: string, onMessage: () => void, options?: any): void;
-    subscribeOnce(exchangeName: string, pattern: string, queueName: string, onMessage: () => void, options?: any): void;
-    publish(exchangeName: string, routingKey: string, content?: any, options?: any): void;
+    subscribe(
+      exchangeName: string,
+      pattern: string,
+      queueName: string,
+      onMessage: () => void,
+      options?: any
+    ): void;
+    subscribeTmp(
+      exchangeName: string,
+      pattern: string,
+      queueName: string,
+      onMessage: () => void,
+      options?: any
+    ): void;
+    subscribeOnce(
+      exchangeName: string,
+      pattern: string,
+      queueName: string,
+      onMessage: () => void,
+      options?: any
+    ): void;
+    publish(
+      exchangeName: string,
+      routingKey: string,
+      content?: any,
+      options?: any
+    ): void;
     close(): void;
-
   }
 
   export interface BpmnEngineExecuteOptions {
@@ -201,7 +262,6 @@ declare module 'bpmn-engine' {
   }
 
   export interface BpmnEngineOptions {
-
     /**
      * optional name of engine,
      */
@@ -245,19 +305,22 @@ declare module 'bpmn-engine' {
   }
 
   export interface BpmnEngineExtension {
-    [name: string]: (activiy?: BpmnEngineActivity, environment?: BpmnEngineExecutionEnvironment) => void;
+    [name: string]: (
+      activiy?: BpmnEngineActivity,
+      environment?: BpmnEngineExecutionEnvironment
+    ) => void;
   }
 
   export interface BpmnEngineExpressions {
     resolveExpression<R>(
       expression: string,
       message?: any,
-      expressionFnContext?: any,
+      expressionFnContext?: any
     ): R;
   }
 
   export interface BpmnEngine {
-    new(options?: BpmnEngineOptions): BpmnEngine;
+    new (options?: BpmnEngineOptions): BpmnEngine;
 
     /**
      * engine name
@@ -278,7 +341,7 @@ declare module 'bpmn-engine' {
     /**
      * current engine execution
      */
-    readonly  execution: BpmnEngineExecutionApi;
+    readonly execution: BpmnEngineExecutionApi;
     /**
      * engine environment
      */
@@ -294,7 +357,10 @@ declare module 'bpmn-engine' {
      * @param cb Callback called before the throw
      * @summary Execute options overrides the initial options passed to the engine before executing the definition.
      */
-    execute(options?:BpmnEngineExecuteOptions, cb?: (err) => void): Promise<BpmnEngineExecutionApi>;
+    execute(
+      options?: BpmnEngineExecuteOptions,
+      cb?: (err) => void
+    ): Promise<BpmnEngineExecutionApi>;
 
     /**
      * get definition by id
@@ -324,7 +390,10 @@ declare module 'bpmn-engine' {
      * @param options
      * @param callback
      */
-    resume(options?: BpmnEngineExecuteOptions, callback?: () => void): Promise<BpmnEngineExecutionApi>;
+    resume(
+      options?: BpmnEngineExecuteOptions,
+      callback?: () => void
+    ): Promise<BpmnEngineExecutionApi>;
 
     /**
      * Stop execution. The instance is terminated.
@@ -337,8 +406,7 @@ declare module 'bpmn-engine' {
      * Add definition source by source context.
      * @param options
      */
-    addSource(options?: {sourceContext: any}): void;
-
+    addSource(options?: { sourceContext: any }): void;
   }
 
   export function Engine(options?: BpmnEngineOptions): BpmnEngine;
@@ -355,7 +423,6 @@ declare module 'bpmn-engine' {
     resume(resumeOptions?: any): void;
 
     stop(): void;
-
   }
 
   export interface BpmnEngineExecutionContext {
@@ -391,7 +458,10 @@ declare module 'bpmn-engine' {
   }
 
   export interface BpmnProcess {
-    new(processDefinition: any, context: BpmnEngineExecutionContext): BpmnProcess;
+    new (
+      processDefinition: any,
+      context: BpmnEngineExecutionContext
+    ): BpmnProcess;
 
     readonly id: string;
     readonly type: string;
@@ -431,13 +501,13 @@ declare module 'bpmn-engine' {
   export interface BpmnEngineActivity extends EventEmitter {
     readonly id: string;
     readonly type: string;
-    readonly  name: string;
+    readonly name: string;
 
     readonly attachedTo: any;
 
-    readonly  Behaviour: any;
+    readonly Behaviour: any;
 
-    readonly  behaviour: any;
+    readonly behaviour: any;
 
     readonly broker: BpmnEngineBroker<BpmnEngine>;
 
@@ -515,7 +585,7 @@ declare module 'bpmn-engine' {
     resolveExpression<R>(
       expression: any,
       message?: any,
-      expressionFnContext?: any,
+      expressionFnContext?: any
     ): R;
 
     recover(state: any): void;
@@ -530,15 +600,15 @@ declare module 'bpmn-engine' {
   }
 
   export interface BpmnExecutionEventMessageApi {
-    readonly  id: string;
+    readonly id: string;
     readonly type: string;
-    readonly  name: string;
+    readonly name: string;
     readonly executionId: string;
-    readonly  environment: BpmnEngineExecutionEnvironment;
+    readonly environment: BpmnEngineExecutionEnvironment;
     readonly fields: any;
 
     readonly content: BpmnExecutionEventMessageContent;
-    readonly  messageProperties: any;
+    readonly messageProperties: any;
     readonly owner: BpmnEngine;
 
     cancel(): void;
@@ -584,7 +654,7 @@ declare module 'bpmn-engine' {
 
   export interface BpmnEngineExecutionDefinitionState {
     readonly state: 'pending' | 'running' | 'completed';
-    readonly  processes: {
+    readonly processes: {
       [processId: string]: {
         variables: BpmnEngineVariable;
         services: BpmnEngineService;
@@ -730,7 +800,10 @@ declare module 'bpmn-engine' {
      * @param message {BpmnMessage}
      * @param options
      */
-    signal(message?: BpmnMessage, options?: {ignoreSameDefinition?: boolean}): void;
+    signal(
+      message?: BpmnMessage,
+      options?: { ignoreSameDefinition?: boolean }
+    ): void;
 
     /**
      * send cancel activity to execution, distributed to all definitions
@@ -744,7 +817,5 @@ declare module 'bpmn-engine' {
      * @param event
      */
     waitFor<T>(event: BpmnEngineEvent): Promise<T>;
-
   }
-
 }

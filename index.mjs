@@ -1,31 +1,31 @@
-import BpmnModdle from "bpmn-moddle";
-import DebugLogger from "./lib/Logger.mjs";
-import Elements from "bpmn-elements";
-import getOptionsAndCallback from "./lib/getOptionsAndCallback.mjs";
-import JavaScripts from "./lib/JavaScripts.mjs";
-import ProcessOutputDataObject from "./lib/extensions/ProcessOutputDataObject.mjs";
-import { Broker } from "smqp";
-import ModdleSerializer from "moddle-context-serializer";
-import { EventEmitter } from "events";
+import BpmnModdle from 'bpmn-moddle';
+import DebugLogger from './lib/Logger.mjs';
+import Elements from 'bpmn-elements';
+import getOptionsAndCallback from './lib/getOptionsAndCallback.mjs';
+import JavaScripts from './lib/JavaScripts.mjs';
+import ProcessOutputDataObject from './lib/extensions/ProcessOutputDataObject.mjs';
+import { Broker } from 'smqp';
+import ModdleSerializer from 'moddle-context-serializer';
+import { EventEmitter } from 'events';
 
 const { default: serializer, deserialize, TypeResolver } = ModdleSerializer;
-const kEngine = Symbol.for("engine");
-const kEnvironment = Symbol.for("environment");
-const kExecuting = Symbol.for("executing");
-const kExecution = Symbol.for("execution");
-const kLoadedDefinitions = Symbol.for("loaded definitions");
-const kOnBrokerReturn = Symbol.for("onBrokerReturn");
-const kPendingSources = Symbol.for("pending sources");
-const kSources = Symbol.for("sources");
-const kState = Symbol.for("state");
-const kStopped = Symbol.for("stopped");
-const kTypeResolver = Symbol.for("type resolver");
+const kEngine = Symbol.for('engine');
+const kEnvironment = Symbol.for('environment');
+const kExecuting = Symbol.for('executing');
+const kExecution = Symbol.for('execution');
+const kLoadedDefinitions = Symbol.for('loaded definitions');
+const kOnBrokerReturn = Symbol.for('onBrokerReturn');
+const kPendingSources = Symbol.for('pending sources');
+const kSources = Symbol.for('sources');
+const kState = Symbol.for('state');
+const kStopped = Symbol.for('stopped');
+const kTypeResolver = Symbol.for('type resolver');
 
 export { Engine, Execution };
-import fs from "fs";
+import fs from 'fs';
 
 const { version: engineVersion } = JSON.parse(
-  fs.readFileSync("./package.json", "utf-8")
+  fs.readFileSync('./package.json', 'utf-8')
 );
 
 function Engine(options) {
@@ -39,15 +39,15 @@ class EngineClass extends EventEmitter {
     const opts = (this.options = {
       Logger: DebugLogger,
       scripts: new JavaScripts(options.disableDummyScript),
-      ...options,
+      ...options
     });
 
-    this.logger = opts.Logger("engine");
+    this.logger = opts.Logger('engine');
 
     this[kTypeResolver] = TypeResolver(
       {
         ...Elements,
-        ...(opts.elements || {}),
+        ...(opts.elements || {})
       },
       opts.typeResolver || defaultTypeResolver
     );
@@ -55,7 +55,7 @@ class EngineClass extends EventEmitter {
     this[kEnvironment] = new Elements.Environment(opts);
 
     const broker = (this.broker = new Broker(this));
-    broker.assertExchange("event", "topic", { autoDelete: false });
+    broker.assertExchange('event', 'topic', { autoDelete: false });
 
     this[kExecution] = null;
     this[kLoadedDefinitions] = null;
@@ -63,8 +63,9 @@ class EngineClass extends EventEmitter {
 
     const pendingSources = (this[kPendingSources] = []);
     if (opts.source) pendingSources.push(this._serializeSource(opts.source));
-    if (opts.moddleContext)
+    if (opts.moddleContext) {
       pendingSources.push(this._serializeModdleContext(opts.moddleContext));
+    }
     if (opts.sourceContext) pendingSources.push(opts.sourceContext);
   }
 
@@ -82,7 +83,7 @@ class EngineClass extends EventEmitter {
   get state() {
     const execution = this.execution;
     if (execution) return execution.state;
-    return "idle";
+    return 'idle';
   }
 
   get stopped() {
@@ -125,10 +126,12 @@ class EngineClass extends EventEmitter {
 
     this.logger.debug(`<${name}> recover`);
 
-    if (recoverOptions)
+    if (recoverOptions) {
       this[kEnvironment] = new Elements.Environment(recoverOptions);
-    if (savedState.environment)
+    }
+    if (savedState.environment) {
       this[kEnvironment] = this[kEnvironment].recover(savedState.environment);
+    }
 
     if (!savedState.definitions) return this;
 
@@ -139,9 +142,9 @@ class EngineClass extends EventEmitter {
     const loadedDefinitions = (this[kLoadedDefinitions] =
       savedState.definitions.map((dState) => {
         let source;
-        if (dState.source)
+        if (dState.source) {
           source = deserialize(JSON.parse(dState.source), typeResolver);
-        else source = preSources.find((s) => s.id === dState.id);
+        } else source = preSources.find((s) => s.id === dState.id);
 
         pendingSources.push(source);
 
@@ -165,7 +168,7 @@ class EngineClass extends EventEmitter {
     if (!execution) {
       const definitions = await this.getDefinitions();
       if (!definitions.length) {
-        const err = new Error("nothing to resume");
+        const err = new Error('nothing to resume');
         if (callback) return callback(err);
         throw err;
       }
@@ -208,10 +211,10 @@ class EngineClass extends EventEmitter {
     const self = this;
     return new Promise((resolve, reject) => {
       self.once(eventName, onEvent);
-      self.once("error", onError);
+      self.once('error', onError);
 
       function onEvent(api) {
-        self.removeListener("error", onError);
+        self.removeListener('error', onError);
         resolve(api);
       }
       function onError(err) {
@@ -240,13 +243,13 @@ class EngineClass extends EventEmitter {
         ...executeOptions,
         settings: {
           ...environment.settings,
-          ...settings,
+          ...settings
         },
         variables: {
           ...environment.variables,
-          ...variables,
+          ...variables
         },
-        source: serializedContext,
+        source: serializedContext
       })
     );
 
@@ -273,8 +276,8 @@ class EngineClass extends EventEmitter {
 }
 
 function defaultTypeResolver(elementTypes) {
-  elementTypes["bpmn:DataObject"] = ProcessOutputDataObject;
-  elementTypes["bpmn:DataStoreReference"] = ProcessOutputDataObject;
+  elementTypes['bpmn:DataObject'] = ProcessOutputDataObject;
+  elementTypes['bpmn:DataStoreReference'] = ProcessOutputDataObject;
 }
 
 function Execution(engine, definitions, options, isRecovered = false) {
@@ -286,14 +289,14 @@ class ExecutionClass {
     this.name = engine.name;
     this.options = options;
     this.definitions = definitions;
-    this[kState] = "idle";
+    this[kState] = 'idle';
     this[kStopped] = isRecovered;
     this[kEnvironment] = engine.environment;
     this[kEngine] = engine;
     this[kExecuting] = [];
     const onBrokerReturn = (this[kOnBrokerReturn] =
       this._onBrokerReturn.bind(this));
-    engine.broker.on("return", onBrokerReturn);
+    engine.broker.on('return', onBrokerReturn);
   }
 
   get state() {
@@ -315,7 +318,7 @@ class ExecutionClass {
   _execute(executeOptions, callback) {
     this._setup(executeOptions);
     this[kStopped] = false;
-    this._debug("execute");
+    this._debug('execute');
 
     this._addConsumerCallbacks(callback);
     const definitionExecutions = this.definitions.reduce(
@@ -328,8 +331,8 @@ class ExecutionClass {
     );
 
     if (!definitionExecutions.length) {
-      const error = new Error("No executable processes");
-      if (!callback) return this[kEngine].emit("error", error);
+      const error = new Error('No executable processes');
+      if (!callback) return this[kEngine].emit('error', error);
       return callback(error);
     }
 
@@ -340,7 +343,7 @@ class ExecutionClass {
     this._setup(resumeOptions);
 
     this[kStopped] = false;
-    this._debug("resume");
+    this._debug('resume');
     this._addConsumerCallbacks(callback);
 
     this[kExecuting].splice(0);
@@ -355,53 +358,53 @@ class ExecutionClass {
     const broker = this.broker;
     const onBrokerReturn = this[kOnBrokerReturn];
 
-    broker.off("return", onBrokerReturn);
+    broker.off('return', onBrokerReturn);
 
     clearConsumers();
 
     broker.subscribeOnce(
-      "event",
-      "engine.stop",
+      'event',
+      'engine.stop',
       () => {
         clearConsumers();
         return callback(null, this);
       },
-      { consumerTag: "ctag-cb-stop" }
+      { consumerTag: 'ctag-cb-stop' }
     );
 
     broker.subscribeOnce(
-      "event",
-      "engine.end",
+      'event',
+      'engine.end',
       () => {
         clearConsumers();
         return callback(null, this);
       },
-      { consumerTag: "ctag-cb-end" }
+      { consumerTag: 'ctag-cb-end' }
     );
 
     broker.subscribeOnce(
-      "event",
-      "engine.error",
+      'event',
+      'engine.error',
       (_, message) => {
         clearConsumers();
         return callback(message.content);
       },
-      { consumerTag: "ctag-cb-error" }
+      { consumerTag: 'ctag-cb-error' }
     );
 
     return callback;
 
     function clearConsumers() {
-      broker.cancel("ctag-cb-stop");
-      broker.cancel("ctag-cb-end");
-      broker.cancel("ctag-cb-error");
-      broker.on("return", onBrokerReturn);
+      broker.cancel('ctag-cb-stop');
+      broker.cancel('ctag-cb-end');
+      broker.cancel('ctag-cb-error');
+      broker.on('return', onBrokerReturn);
     }
   }
 
   async stop() {
     const engine = this[kEngine];
-    const prom = engine.waitFor("stop");
+    const prom = engine.waitFor('stop');
     this[kStopped] = true;
     const timers = engine.environment.timers;
 
@@ -410,35 +413,36 @@ class ExecutionClass {
     this[kExecuting].splice(0).forEach((d) => d.stop());
 
     const result = await prom;
-    this[kState] = "stopped";
+    this[kState] = 'stopped';
     return result;
   }
 
   _setup(setupOptions = {}) {
     const listener = setupOptions.listener || this.options.listener;
-    if (listener && typeof listener.emit !== "function")
-      throw new Error("listener.emit is not a function");
+    if (listener && typeof listener.emit !== 'function') {
+      throw new Error('listener.emit is not a function');
+    }
 
     const onChildMessage = this._onChildMessage.bind(this);
 
     for (const definition of this.definitions) {
       if (listener) definition.environment.options.listener = listener;
 
-      definition.broker.subscribeTmp("event", "definition.#", onChildMessage, {
+      definition.broker.subscribeTmp('event', 'definition.#', onChildMessage, {
         noAck: true,
-        consumerTag: "_engine_definition",
+        consumerTag: '_engine_definition'
       });
-      definition.broker.subscribeTmp("event", "process.#", onChildMessage, {
+      definition.broker.subscribeTmp('event', 'process.#', onChildMessage, {
         noAck: true,
-        consumerTag: "_engine_process",
+        consumerTag: '_engine_process'
       });
-      definition.broker.subscribeTmp("event", "activity.#", onChildMessage, {
+      definition.broker.subscribeTmp('event', 'activity.#', onChildMessage, {
         noAck: true,
-        consumerTag: "_engine_activity",
+        consumerTag: '_engine_activity'
       });
-      definition.broker.subscribeTmp("event", "flow.#", onChildMessage, {
+      definition.broker.subscribeTmp('event', 'flow.#', onChildMessage, {
         noAck: true,
-        consumerTag: "_engine_flow",
+        consumerTag: '_engine_flow'
       });
     }
   }
@@ -447,56 +451,56 @@ class ExecutionClass {
     const { environment: ownerEnvironment } = owner;
     const listener =
       ownerEnvironment.options && ownerEnvironment.options.listener;
-    this[kState] = "running";
+    this[kState] = 'running';
 
     let newState;
     const elementApi = owner.getApi && owner.getApi(message);
 
     switch (routingKey) {
-      case "definition.resume":
-      case "definition.enter": {
+      case 'definition.resume':
+      case 'definition.enter': {
         const executing = this[kExecuting];
         const idx = executing.indexOf(owner);
         if (idx > -1) break;
         executing.push(owner);
         break;
       }
-      case "definition.stop": {
+      case 'definition.stop': {
         this._teardownDefinition(owner);
 
         const executing = this[kExecuting];
         if (executing.some((d) => d.isRunning)) break;
 
-        newState = "stopped";
+        newState = 'stopped';
         this[kStopped] = true;
         break;
       }
-      case "definition.leave":
+      case 'definition.leave':
         this._teardownDefinition(owner);
 
         if (this[kExecuting].some((d) => d.isRunning)) break;
 
-        newState = "idle";
+        newState = 'idle';
         break;
-      case "definition.error":
+      case 'definition.error':
         this._teardownDefinition(owner);
-        newState = "error";
+        newState = 'error';
         break;
-      case "activity.wait": {
-        if (listener) listener.emit("wait", owner.getApi(message), this);
+      case 'activity.wait': {
+        if (listener) listener.emit('wait', owner.getApi(message), this);
         break;
       }
-      case "process.end": {
+      case 'process.end': {
         if (!message.content.output) break;
         const environment = this.environment;
 
         for (const key in message.content.output) {
           switch (key) {
-            case "data": {
+            case 'data': {
               environment.output.data = environment.output.data || {};
               environment.output.data = {
                 ...environment.output.data,
-                ...message.content.output.data,
+                ...message.content.output.data
               };
               break;
             }
@@ -513,7 +517,7 @@ class ExecutionClass {
 
     const broker = this.broker;
     broker.publish(
-      "event",
+      'event',
       routingKey,
       { ...message.content },
       { ...message.properties, mandatory: false }
@@ -524,19 +528,19 @@ class ExecutionClass {
     this[kState] = newState;
 
     switch (newState) {
-      case "stopped":
-        this._debug("stopped");
-        broker.publish("event", "engine.stop", {}, { type: "stop" });
-        return this[kEngine].emit("stop", this);
-      case "idle":
-        this._debug("completed");
-        broker.publish("event", "engine.end", {}, { type: "end" });
-        return this[kEngine].emit("end", this);
-      case "error":
-        this._debug("error");
-        return broker.publish("event", "engine.error", message.content.error, {
-          type: "error",
-          mandatory: true,
+      case 'stopped':
+        this._debug('stopped');
+        broker.publish('event', 'engine.stop', {}, { type: 'stop' });
+        return this[kEngine].emit('stop', this);
+      case 'idle':
+        this._debug('completed');
+        broker.publish('event', 'engine.end', {}, { type: 'end' });
+        return this[kEngine].emit('end', this);
+      case 'error':
+        this._debug('error');
+        return broker.publish('event', 'engine.error', message.content.error, {
+          type: 'error',
+          mandatory: true
         });
     }
   }
@@ -546,10 +550,10 @@ class ExecutionClass {
     const idx = executing.indexOf(definition);
     if (idx > -1) executing.splice(idx, 1);
 
-    definition.broker.cancel("_engine_definition");
-    definition.broker.cancel("_engine_process");
-    definition.broker.cancel("_engine_activity");
-    definition.broker.cancel("_engine_flow");
+    definition.broker.cancel('_engine_definition');
+    definition.broker.cancel('_engine_process');
+    definition.broker.cancel('_engine_activity');
+    definition.broker.cancel('_engine_flow');
   }
 
   getState() {
@@ -557,7 +561,7 @@ class ExecutionClass {
     for (const definition of this.definitions) {
       definitions.push({
         ...definition.getState(),
-        source: definition.environment.options.source.serialize(),
+        source: definition.environment.options.source.serialize()
       });
     }
 
@@ -567,7 +571,7 @@ class ExecutionClass {
       stopped: this.stopped,
       engineVersion,
       environment: this.environment.getState(),
-      definitions,
+      definitions
     };
   }
 
@@ -593,8 +597,9 @@ class ExecutionClass {
         payload &&
         payload.parent &&
         payload.parent.id === definition.id
-      )
+      ) {
         continue;
+      }
       definition.signal(payload);
     }
   }
@@ -610,8 +615,8 @@ class ExecutionClass {
   }
 
   _onBrokerReturn(message) {
-    if (message.properties.type === "error") {
-      this[kEngine].emit("error", message.content);
+    if (message.properties.type === 'error') {
+      this[kEngine].emit('error', message.content);
     }
   }
 

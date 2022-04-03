@@ -1,8 +1,8 @@
-import fs from "fs";
-import { URL, fileURLToPath } from "url";
+import fs from 'fs';
+import { URL, fileURLToPath } from 'url';
 
 export function valid(definitionId) {
-  if (!definitionId) definitionId = "valid";
+  if (!definitionId) definitionId = 'valid';
   return `
   <?xml version="1.0" encoding="UTF-8"?>
   <definitions id="${definitionId}" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -37,7 +37,7 @@ export function invalid() {
 </definitions>`;
 }
 
-export function userTask(userTaskId = "userTask", definitionId = "Def_1") {
+export function userTask(userTaskId = 'userTask', definitionId = 'Def_1') {
   return `
   <?xml version="1.0" encoding="UTF-8"?>
   <definitions id="${definitionId}" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -85,6 +85,6 @@ export function multipleInbound() {
 
 export function resource(name) {
   return fs.readFileSync(
-    fileURLToPath(new URL("../resources/" + name, import.meta.url))
+    fileURLToPath(new URL('../resources/' + name, import.meta.url))
   );
 }

@@ -1,24 +1,23 @@
 /* eslint no-console:0 */
-"use strict";
 
-import fs from "fs";
-import vm from "vm";
-import nock from "nock";
+import fs from 'fs';
+import vm from 'vm';
+import nock from 'nock';
 
-const { name, main } = JSON.parse(fs.readFileSync("../package.json", "utf-8"));
+const { name, main } = JSON.parse(fs.readFileSync('../package.json', 'utf-8'));
 
-process.on("unhandledRejection", (error) => {
-  console.log("unhandledRejection", error);
+process.on('unhandledRejection', (error) => {
+  console.log('unhandledRejection', error);
 });
 
 nock.enableNetConnect(/(localhost|127\.0\.0\.1):\d+/);
-nock("https://example.com").get(/.*/).reply(200, { data: 1 }).persist();
+nock('https://example.com').get(/.*/).reply(200, { data: 1 }).persist();
 
 const exPattern = /```javascript\n([\s\S]*?)```/gi;
 let lines = 0;
 let prevCharIdx = 0;
 
-const file = process.argv[2] || "./docs/API.md";
+const file = process.argv[2] || './docs/API.md';
 const blockIdx = Number(process.argv[3]);
 
 function parseDoc(filePath) {
@@ -28,7 +27,7 @@ function parseDoc(filePath) {
     const blocks = [];
     const content = fileContent.toString();
 
-    content.replace(exPattern, (match, block, idx) => {
+    content.replace(exPattern, (_match, block, idx) => {
       block = block.replace(`require('${name}')`, `require('../${main}')`);
 
       const blockLine = calculateLine(content, idx);
@@ -37,7 +36,7 @@ function parseDoc(filePath) {
         block,
         line: blockLine,
         len: block.length,
-        script: parse(`${filePath}`, block, blockLine),
+        script: parse(`${filePath}`, block, blockLine)
       });
     });
 
@@ -53,7 +52,7 @@ function parseDoc(filePath) {
     return new vm.Script(scriptBody, {
       filename: filename,
       displayErrors: true,
-      lineOffset: lineOffset,
+      lineOffset: lineOffset
     });
   }
 }
@@ -65,16 +64,16 @@ function execute(script) {
     setTimeout,
     db: {
       getSavedState: (id, callback) => {
-        if (fs.existsSync("./tmp/some-random-id.json")) {
-          const state = require("../tmp/some-random-id.json");
+        if (fs.existsSync('./tmp/some-random-id.json')) {
+          const state = require('../tmp/some-random-id.json');
           return callback(null, state);
         }
-        callback(new Error("No state"));
+        callback(new Error('No state'));
       },
       getState: (id, callback) => {
         callback(null, { definitions: [] });
-      },
-    },
+      }
+    }
   };
   const vmContext = new vm.createContext(context);
   return script.runInContext(vmContext);

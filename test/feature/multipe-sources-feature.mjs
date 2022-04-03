@@ -692,14 +692,16 @@ function ioFormatting(activity, context, ioData) {
   }
 }
 
-function DataStores(data) {
-  this.data = data;
+class DataStores {
+  constructor(data) {
+    this.data = data;
+  }
+
+  getDataStore(id) {
+    return this.data[id];
+  }
+
+  setDataStore(id, value) {
+    this.data[id] = value;
+  }
 }
-
-DataStores.prototype.getDataStore = function getDataStore(id) {
-  return this.data[id];
-};
-
-DataStores.prototype.setDataStore = function setDataStore(id, value) {
-  this.data[id] = value;
-};

@@ -17,7 +17,7 @@ Feature('Resume execution', () => {
     });
 
     Given('an engine with source', () => {
-      engine = Engine({
+      engine = new Engine({
         name: 'Engine feature',
         source,
         settings: {
@@ -65,7 +65,7 @@ Feature('Resume execution', () => {
     When(
       'engine is recovered with a new setting and one overridden setting',
       () => {
-        recovered = Engine({
+        recovered = new Engine({
           name: 'Recovered engine'
         }).recover(state, {
           settings: {
@@ -244,7 +244,7 @@ Feature('Resume execution', () => {
     When(
       'engine is recovered with a the slimmer state and sourceContext',
       async () => {
-        recovered = Engine({
+        recovered = new Engine({
           sourceContext: await testHelpers.context(source)
         }).recover(slimmerState);
       }
@@ -256,7 +256,7 @@ Feature('Resume execution', () => {
     });
 
     When('sourceContext is added to engine before resume', async () => {
-      recovered = Engine();
+      recovered = new Engine();
 
       recovered.addSource({
         sourceContext: await testHelpers.context(source)
@@ -282,7 +282,7 @@ Feature('Resume execution', () => {
         </process>
       </definitions>`;
 
-        recovered = Engine({
+        recovered = new Engine({
           name: 'Recovered engine',
           sourceContext: await testHelpers.context(otherSource)
         });

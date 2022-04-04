@@ -21,18 +21,13 @@ const kState = Symbol.for('state');
 const kStopped = Symbol.for('stopped');
 const kTypeResolver = Symbol.for('type resolver');
 
-export { Engine, Execution };
 import fs from 'fs';
 
 const { version: engineVersion } = JSON.parse(
   fs.readFileSync('./package.json', 'utf-8')
 );
 
-function Engine(options) {
-  return new EngineClass(options);
-}
-
-class EngineClass extends EventEmitter {
+export class Engine extends EventEmitter {
   constructor(options = {}) {
     super();
 
@@ -280,11 +275,7 @@ function defaultTypeResolver(elementTypes) {
   elementTypes['bpmn:DataStoreReference'] = ProcessOutputDataObject;
 }
 
-function Execution(engine, definitions, options, isRecovered = false) {
-  return new ExecutionClass(engine, definitions, options, isRecovered);
-}
-
-class ExecutionClass {
+export class Execution {
   constructor(engine, definitions, options, isRecovered = false) {
     this.name = engine.name;
     this.options = options;

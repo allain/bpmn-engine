@@ -29,7 +29,7 @@ Feature('Timers', () => {
           )
         });
 
-        engine = Engine({
+        engine = new Engine({
           name: 'timers',
           sourceContext,
           variables: {
@@ -150,7 +150,7 @@ Feature('Timers', () => {
     });
 
     Given('the execution is recovered and resumed somewhere else', async () => {
-      engine = Engine();
+      engine = new Engine();
       engine.recover(JSON.parse(JSON.stringify(state)));
       execution = await engine.resume();
     });
@@ -175,7 +175,7 @@ Feature('Timers', () => {
     });
 
     When('the execution is recovered and resumed somewhere else', async () => {
-      engine = Engine();
+      engine = new Engine();
       engine.recover(JSON.parse(JSON.stringify(state)));
       execution = await engine.resume();
     });
@@ -196,7 +196,7 @@ Feature('Timers', () => {
     });
 
     When('the engine is recovered and resumed somewhere else', async () => {
-      engine = Engine();
+      engine = new Engine();
       engine.recover(JSON.parse(JSON.stringify(state)));
       execution = await engine.resume();
     });
@@ -226,7 +226,7 @@ Feature('Timers', () => {
 
     let timeoutMessage;
     When('the engine is recovered and resumed somewhere else', async () => {
-      engine = Engine();
+      engine = new Engine();
       engine.recover(JSON.parse(JSON.stringify(state)));
 
       engine.broker.subscribeTmp(

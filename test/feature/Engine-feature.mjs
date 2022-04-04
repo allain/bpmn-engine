@@ -15,7 +15,7 @@ Feature('Engine', () => {
     );
 
     And('an engine with preset settings and variables', () => {
-      engine = Engine({
+      engine = new Engine({
         name: 'Engine feature',
         source,
         settings: {
@@ -136,7 +136,7 @@ Feature('Engine', () => {
     });
 
     And('an engine', () => {
-      engine = Engine({
+      engine = new Engine({
         name: 'Engine lanes',
         source
       });
@@ -188,7 +188,7 @@ Feature('Engine', () => {
     And(
       'an engine loaded with extension for fetching form and saving output',
       async () => {
-        engine = Engine({
+        engine = new Engine({
           name: 'Engine feature',
           source,
           moddleOptions: {
@@ -291,7 +291,7 @@ Feature('Engine', () => {
     });
 
     And('an engine', () => {
-      engine = Engine({
+      engine = new Engine({
         name: 'Engine feature',
         source,
         services: {
@@ -336,7 +336,7 @@ Feature('Engine', () => {
     });
 
     And('an engine', () => {
-      engine = Engine({
+      engine = new Engine({
         name: 'Engine feature',
         source,
         services: {

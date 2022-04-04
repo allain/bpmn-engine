@@ -153,7 +153,7 @@ Feature('Issues', () => {
 
       let execution, end, wait;
       When('definition is ran', async () => {
-        engine = Engine({
+        engine = new Engine({
           ...options,
           variables: {
             passTask2: 1
@@ -192,7 +192,7 @@ Feature('Issues', () => {
       });
 
       When('executed again', async () => {
-        engine = Engine({
+        engine = new Engine({
           ...options,
           variables: {
             passTask2: 1
@@ -247,7 +247,7 @@ Feature('Issues', () => {
       When(
         'execution is recovered with state from first run user task wait',
         () => {
-          engine = Engine(options);
+          engine = new Engine(options);
           engine.recover(JSON.parse(states[0]));
         }
       );
@@ -299,7 +299,7 @@ Feature('Issues', () => {
 
       Given('ran again', async () => {
         states.splice(0);
-        engine = Engine({
+        engine = new Engine({
           ...options,
           variables: {
             passTask2: 1
@@ -328,7 +328,7 @@ Feature('Issues', () => {
       });
 
       When('definition is recovered with state', async () => {
-        engine = Engine(options);
+        engine = new Engine(options);
         engine.recover(state);
 
         end = engine.waitFor('end');
@@ -412,7 +412,7 @@ Feature('Issues', () => {
 
       let execution, end, wait;
       When('definition is ran', async () => {
-        engine = Engine({
+        engine = new Engine({
           ...options,
           variables: {
             passTask2: 1
@@ -451,7 +451,7 @@ Feature('Issues', () => {
       });
 
       When('executed again', async () => {
-        engine = Engine({
+        engine = new Engine({
           ...options,
           variables: {
             passTask2: 1
@@ -506,7 +506,7 @@ Feature('Issues', () => {
       When(
         'execution is recovered with state from first run user task wait',
         () => {
-          engine = Engine(options);
+          engine = new Engine(options);
           engine.recover(JSON.parse(states[0]));
         }
       );
@@ -558,7 +558,7 @@ Feature('Issues', () => {
 
       Given('ran again', async () => {
         states.splice(0);
-        engine = Engine({
+        engine = new Engine({
           ...options,
           variables: {
             passTask2: 1
@@ -587,7 +587,7 @@ Feature('Issues', () => {
       });
 
       When('definition is recovered with state', async () => {
-        engine = Engine(options);
+        engine = new Engine(options);
         engine.recover(state);
 
         end = engine.waitFor('end');
@@ -681,7 +681,7 @@ Feature('Issues', () => {
       listener = new EventEmitter();
       listener.on('activity.wait', onWait);
 
-      engine = Engine({
+      engine = new Engine({
         ...options,
         variables: {
           takeTask3: 1
@@ -697,7 +697,7 @@ Feature('Issues', () => {
     });
 
     When('execution is recovered', () => {
-      engine = Engine().recover(states.pop());
+      engine = new Engine().recover(states.pop());
     });
 
     Then('first user task is still executing', async () => {
@@ -731,7 +731,7 @@ Feature('Issues', () => {
     });
 
     When('execution is recovered', () => {
-      engine = Engine().recover(states.pop());
+      engine = new Engine().recover(states.pop());
     });
 
     Then('second user task is still executing', async () => {
@@ -780,7 +780,7 @@ Feature('Issues', () => {
 
     let end;
     When('execution is recovered', () => {
-      engine = Engine().recover(states.pop());
+      engine = new Engine().recover(states.pop());
       end = engine.waitFor('end');
     });
 
@@ -835,7 +835,7 @@ Feature('Issues', () => {
 
   Scenario('Parallel Join stuck in postponed state - issue #125', () => {
     async function Start(source) {
-      const engine = Engine({
+      const engine = new Engine({
         name: 'issue 125',
         source
       });
@@ -853,7 +853,7 @@ Feature('Issues', () => {
     }
 
     async function Tick(state) {
-      const engine = Engine({
+      const engine = new Engine({
         name: 'issue 125 - recover'
       }).recover(state);
 
@@ -870,7 +870,7 @@ Feature('Issues', () => {
     }
 
     async function Input(state, signalId) {
-      const engine = Engine({
+      const engine = new Engine({
         name: 'issue 125 - signal'
       }).recover(state);
 
@@ -992,7 +992,7 @@ Feature('Issues', () => {
       async () => {
         const source = factory.resource('one-or-the-other.bpmn');
 
-        engine = Engine({
+        engine = new Engine({
           source
         });
 
@@ -1065,7 +1065,7 @@ Feature('Issues', () => {
           }
         });
 
-        engine = Engine({
+        engine = new Engine({
           source,
           listener
         });
@@ -1086,7 +1086,7 @@ Feature('Issues', () => {
     When('a flow with user task and a bound timeout is executed', async () => {
       const source = factory.resource('boundary-timeout.bpmn');
 
-      engine = Engine({
+      engine = new Engine({
         source,
         timers: TimersWithoutScope()
       });
@@ -1299,7 +1299,7 @@ Feature('Issues', () => {
     let engine, listener;
     Given('process with task with bound named error', async () => {
       listener = new EventEmitter();
-      engine = Engine({
+      engine = new Engine({
         name: 'Engine',
         source,
         listener

@@ -14,7 +14,7 @@ Feature('Scripts', () => {
     });
 
     And('an engine loaded with disabled dummy script', () => {
-      engine = Engine({
+      engine = new Engine({
         name: 'Script feature',
         source,
         disableDummyScript: true
@@ -31,7 +31,7 @@ Feature('Scripts', () => {
     });
 
     When('ran again falsy disable dummy script', () => {
-      engine = Engine({
+      engine = new Engine({
         name: 'Script feature',
         source,
         disableDummyScript: false
@@ -69,7 +69,7 @@ Feature('Scripts', () => {
 
     let end;
     When('source is executed', async () => {
-      engine = Engine({
+      engine = new Engine({
         name: 'Script feature',
         source,
         disableDummyScript: true
@@ -104,7 +104,7 @@ Feature('Scripts', () => {
     });
 
     When('source is executed', async () => {
-      engine = Engine({
+      engine = new Engine({
         name: 'Script feature',
         source,
         disableDummyScript: true

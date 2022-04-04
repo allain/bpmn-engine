@@ -29,7 +29,7 @@ Feature('extending behaviour', () => {
     And(
       'an engine loaded with extension for fetching form and saving output',
       () => {
-        engine = Engine({
+        engine = new Engine({
           name: 'Engine feature',
           source,
           moddleOptions: {
@@ -163,7 +163,7 @@ Feature('extending behaviour', () => {
     And(
       'an engine loaded with extension for fetching form and saving output',
       () => {
-        engine = Engine({
+        engine = new Engine({
           name: 'extend service task',
           source,
           moddleOptions: {
@@ -224,7 +224,7 @@ Feature('extending behaviour', () => {
     });
 
     And('an engine loaded with scripts option', () => {
-      engine = Engine({
+      engine = new Engine({
         name: 'Scripts feature',
         source,
         scripts: {
@@ -327,7 +327,7 @@ Feature('extending behaviour', () => {
 
     let engine;
     And('an engine', () => {
-      engine = Engine({
+      engine = new Engine({
         source,
         moddleOptions: {
           camunda: camundaJson
@@ -465,7 +465,7 @@ Feature('extending behaviour', () => {
 
     let engine, end;
     And('an engine with overide elements', () => {
-      engine = Engine({
+      engine = new Engine({
         source,
         listener,
         elements: {
@@ -516,7 +516,7 @@ Feature('extending behaviour', () => {
     });
 
     Given('an engine with type resolver function with new behaviour', () => {
-      engine = Engine({
+      engine = new Engine({
         source,
         listener,
         typeResolver(types) {
@@ -653,7 +653,7 @@ Feature('extending behaviour', () => {
 
     let engine, end, executed;
     And('an engine with extensions and special script handling', () => {
-      engine = Engine({
+      engine = new Engine({
         moddleOptions: {
           camunda: camundaJson
         },
@@ -775,7 +775,7 @@ Feature('extending behaviour', () => {
 
     let engine, end;
     And('an engine with CallActivity element option', () => {
-      engine = Engine({
+      engine = new Engine({
         source,
         listener,
         elements: {

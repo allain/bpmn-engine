@@ -21,7 +21,7 @@ Feature('Shake', () => {
     And(
       'an engine loaded with extension for fetching form and saving output',
       async () => {
-        engine = Engine({
+        engine = new Engine({
           name: 'Shake feature',
           sourceContext: await testHelpers.context(source)
         });
